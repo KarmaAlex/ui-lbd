@@ -12,8 +12,14 @@ const headers = {
     'Access-Control-Allow-Headers': '*'
 };
 
-const cusomQueries = {
+const customSelect = {
     'Richiesta': 'call getRichieste()'
+}
+
+const customQueries = {
+    "Richiesta":{
+        "Descrizione": "SELECT d.posizione as Posizione, d.foto as Foto, d.descrizione as Descrizione FROM Desc_richiesta d WHERE d.ID = ?"
+    }
 }
 
 var connection = mysql.createConnection({
@@ -99,12 +105,48 @@ async function parseQuery(request, response){
                 break;
             case 'selectRequest':
                 var res = {headers:[], entries:[]};
-                const sql = cusomQueries[data.tableName];
+                var sql = customSelect[data.tableName];
                 if(!sql) {
                     respond(response, 403);
                     break;
                 }
-                const query = connection.query(sql);
+                var query = connection.query(sql);
+                query.on('fields', (fields)=>{
+                    for(const field of fields){
+                        if(field.name.startsWith("ID")){
+                            res.headers.push({
+                                name: field.name.substring(3),
+                                isExtKey: true
+                            })
+                        }
+                        else res.headers.push({
+                            name:field.name,
+                            isExtKey: false
+                        });
+                    }
+                })
+                query.on('result',(packet)=>{
+                    if(packet.constructor.name === "OkPacket") return;
+                    var row = [];
+                    for(const entry in packet){
+                        row.push(packet[entry]);
+                    }
+                    res.entries.push(row);
+                })
+                query.on('end', ()=>{
+                    respond(response, 200, JSON.stringify(res));
+                    res.headers = [];
+                    res.entries = [];
+                })
+                break;
+            case 'queryRequest':
+                var res = {headers:[],entries:[]};
+                var sql = customQueries[data.tableName][data.fieldName];
+                if(!sql){
+                    respond(response, 403);
+                    return;
+                }
+                var query = connection.query(sql, data.id);
                 query.on('fields', (fields)=>{
                     for(const field of fields){
                         res.headers.push(field.name);

@@ -10,11 +10,26 @@ var outputTable = document.getElementById("outputTable");
 var outputHead = document.getElementById("outputHead");
 var outputBody = document.getElementById("outputBody");
 
+var extraModal = document.getElementById("extraModal");
+var extraClose = document.getElementById("extraClose");
+extraClose.onclick = (ev) => { extraModal.style.display = "none"; }
+window.onclick = (ev) => {
+    if(ev.target == extraModal){
+        extraModal.style.display = "none";
+    }
+}
+var extraLabel = document.getElementById("extraLabel");
+var extraTable = document.getElementById("extraTable");
+var extraHead = document.getElementById("extraHead");
+var extraBody = document.getElementById("extraBody");
+
 const switchBtns = document.getElementsByClassName("switch");
 const loadBtns = document.getElementsByClassName("load");
 
 var visibleId = 'insertRichiesta';
 document.getElementById(visibleId).className = 'enabled';
+
+var activeTable = '';
 
 for(const element of switchBtns){
     element.onclick = switchTab
@@ -32,22 +47,52 @@ function switchTab(event){
     document.getElementById(visibleId).className = 'enabled';
 }
 
-function updateTable(res){
+async function extraButton(event){
+    await loadExtra(event.currentTarget.id, event.currentTarget.name);
+    extraModal.style.display = 'block';
+}
+
+function updateRecords(res){
     res.json().then((data)=>{
+        var dataTable = [];
+        for(var i = 0; i<data.headers.length; i++){
+            var col = [];
+            var header = data.headers[i];
+            col.push(header.name);
+            for(var item of data.entries){
+                if(header.isExtKey){
+                    var button = document.createElement("button");
+                    button.id = item[i];
+                    button.innerText = 'Vedi';
+                    button.name = header.name;
+                    button.onclick = extraButton;
+                    col.push(button);
+                }
+                else col.push(item[i]);
+            }
+            dataTable.push(col);
+        }
+
         var children = outputHead.children
         while(children.length>0){children[0].remove()}
-        for(const key of data.headers){
+
+        for(var i = 0; i < dataTable.length; i++){
             var th = document.createElement("th");
-            th.innerText = key;
+            th.innerText = dataTable[i][0];
             outputHead.appendChild(th);
         }
+        
         children = outputBody.children;
         while(children.length>0){children[0].remove()}
-        for(var item of data.entries){
+
+        for(var i = 1; i < dataTable[0].length; i++){
             var tr = document.createElement("tr");
-            for(var value of item){
+            for(var j = 0; j < dataTable.length; j++){
                 var td = document.createElement("td");
-                td.innerText = value;
+                if(dataTable[j][i] instanceof HTMLElement){
+                    td.appendChild(dataTable[j][i]);
+                }
+                else td.innerText = dataTable[j][i];
                 tr.appendChild(td);
             }
             outputBody.appendChild(tr);
@@ -58,12 +103,50 @@ function updateTable(res){
 
 async function loadTable(event){
     const tableName = event.currentTarget.id.substring(4);
-    const res = await sendPOST({
+    var res = await sendPOST({
         type: 'selectRequest',
         tableName: tableName
     }, ENDPOINTS.query);
     //console.log(res);
-    updateTable(res);
+    updateRecords(res);
+    activeTable = tableName;
+}
+
+function updateExtra(response){
+    response.json().then((data)=>{
+        console.log(data)
+        var children = extraHead.children
+        while(children.length>0){ children[0].remove() }
+
+        for(var key of data.headers){
+            var th = document.createElement("th")
+            th.innerText = key
+            extraHead.appendChild(th)
+        }
+        
+        children = extraBody.children;
+        while(children.length>0){ children[0].remove() }
+
+        for(var entry of data.entries){
+            var tr = document.createElement("tr");
+            for(var item of entry){
+                var td = document.createElement("td");
+                td.innerText = item;
+                tr.appendChild(td);
+            }
+            extraBody.appendChild(tr);
+        }
+    })
+}
+
+async function loadExtra(id, fieldName){
+    var res = await sendPOST({
+        type: 'queryRequest',
+        tableName: activeTable,
+        fieldName: fieldName,
+        id: id
+    }, ENDPOINTS.query);
+    updateExtra(res);
 }
 
 async function sendPOST(responseBody, endpoint){
