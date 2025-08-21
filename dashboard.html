@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard Soccorso</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style/dashboard.css">
+</head>
+<body>
+    <h1>Dashboard Soccorso</h1>
+    <div>
+        <div>
+            <button id="switchRichiesta" class="switch">Richiesta</button>
+            <button id="switchMissione" class="switch">Missione</button>
+        </div>
+
+        <form id="insertRichiesta" class="disabled">
+            <h2>Inserisci i dati per la richiesta</h2>
+            <input type="text" placeholder="Nome" id="requestName">
+            <label class="errorText" id="requestNameErr" for="requestName"></label>
+
+            <input type="email" placeholder="email" id="requestEmail">
+            <label class="errorText" id="requestEmailErr" for="requestEmail"></label>
+
+            <input type="text" placeholder="Posizione" id="requestPos">
+            <label class="errorText" id="requestPosErr" for="requestPos"></label>
+
+            <input type="file" accept=".jpeg, .png, .jpg" placeholder="Carica foto" id="requestPhoto">
+            <label class="errorText" id="requestPhotoErr" for="requestPhoto"></label>
+
+            <textarea maxlength="200" placeholder="Descrizione" id="requestDesc"></textarea>
+            <label class="errorText" id="requestDescErr" for="requestDesc"></label>
+
+            <button type="button" id="requestSubmit">Invia</button>
+            <label id="requestSent" for="requestSubmit"></label>
+        </form>
+
+        <form id="insertMissione" class="disabled">
+            <h2>Inserisci nuova Missione</h2>
+            <label for="name">Posizione:</label>
+            <input type="text" id="position" name="position">
+
+            <label for="email">Squadra:</label>
+            <input type="text" id="team" name="team">
+
+            <button type="submit">Inserisci</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Ricerca</h2>
+        <div>
+            <button id="loadRichiesta" type="button" class="load">Richieste</button>
+            <button id="loadMissione" type="button" class="load">Missioni</button>
+            <button id="loadSquadra" type="button" class="load">Squadre</button>
+            <button id="loadUtente" type="button" class="load">Utenti</button>
+        </div>
+
+        <form id="queryRichieste">
+            <label for="search">Ricerca per nome:</label>
+            <input type="text" id="search" name="search">
+
+            <button type="submitRichieste">Cerca</button>
+        </form>
+
+        <h2>Record</h2>
+        <table id="outputTable">
+            <thead id="outputHead">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th class="actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="outputBody">
+                <tr>
+                    <td>1</td>
+                    <td>Sample Name</td>
+                    <td>sample@email.com</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+</body>
+<script src="scripts/dashboard.js"></script>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "ui-lbd",
+  "version": "1.0.0",
+  "description": "Interfaccia per interagire con il database soccorso",
+  "license": "ISC",
+  "author": "Alessandro Di Martino",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "exec" : "node ./scripts/server.js"
+  },
+  "dependencies": {
+    "mysql": "^2.18.1"
+  }
+}
