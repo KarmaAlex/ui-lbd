@@ -25,6 +25,100 @@ var extraBody = document.getElementById("extraBody");
 
 const switchBtns = document.getElementsByClassName("switch");
 const loadBtns = document.getElementsByClassName("load");
+const submitBtns = document.getElementsByClassName("submit");
+
+const submitHandlers = {
+    'Richiesta' : async () => {
+        const requestVars = {
+            name: {
+                element: document.getElementById("requestName"),
+                error: document.getElementById("requestNameErr"),
+                required: true
+            },
+            email: {
+                element: document.getElementById("requestEmail"),
+                error: document.getElementById("requestEmailErr"),
+                required: true
+            },
+            pos: {
+                element: document.getElementById("requestPos"),
+                error: document.getElementById("requestPosErr"),
+                required: true
+            },
+            photo: {
+                element: document.getElementById("requestPhoto"),
+                error: document.getElementById("requestPhotoErr"),
+                required: false
+            },
+            desc: {
+                element: document.getElementById("requestDesc"),
+                error: document.getElementById("requestDescErr"),
+                required: false
+            }
+        }
+        var requestSent = document.getElementById("requestSent");
+
+        var err = false;
+        for(item in requestVars){ requestVars[item].error.innerText=''; }
+        requestSent.innerHTML = '';
+        for(item in requestVars){
+            if(requestVars[item].required && requestVars[item].element.value == ''){
+                err = true;
+                requestVars[item].error.innerText = "Campo richiesto"
+            }
+        }
+        if (err) return;
+        var response;
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                name:requestVars.name.element.value,
+                email:requestVars.email.element.value,
+                pos:requestVars.pos.element.value,
+                desc: requestVars.desc.element.value,
+                file: {
+                    data: null,
+                    filename: null
+                }
+            }
+        }
+        if(requestVars.photo.element.files && requestVars.photo.element.files[0]){
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                responseBody.params.file.data = ev.target.result;
+                var name = requestVars.photo.element.value.split("\\");
+                name = name[name.length - 1];
+                responseBody.params.file.filename = name;
+            }
+            reader.readAsDataURL(requestVars.photo.element.files[0]);
+            response = await sendPOST(responseBody, ENDPOINTS.query);
+        }
+        else{
+            response = await sendPOST(responseBody, ENDPOINTS.query);
+        }
+        if(response){
+            await response.text().then((text)=>{
+                requestSent.innerHTML = "Verifica la richiesta andando su questo <a href="+text+">link</a>";
+            })
+        }
+    }
+}
+
+const resetValues = {
+    "Richiesta": ()=>{
+        document.getElementById("requestName").value = '';
+        document.getElementById("requestNameErr").value = '';
+        document.getElementById("requestEmail").value = '';
+        document.getElementById("requestEmailErr").value = '';
+        document.getElementById("requestPos").value = '';
+        document.getElementById("requestPosErr").value = '';
+        document.getElementById("requestPhoto").value = '';
+        document.getElementById("requestPhotoErr").value = '';
+        document.getElementById("requestDesc").value = '';
+        document.getElementById("requestDescErr").value = '';
+    }
+}
 
 var visibleId = 'insertRichiesta';
 document.getElementById(visibleId).className = 'enabled';
@@ -39,11 +133,20 @@ for (const element of loadBtns){
     element.onclick = loadTable
 }
 
+for (const element of submitBtns){
+    element.onclick = submit
+}
+
+function submit(){
+    submitHandlers[visibleId.substring(6)]();
+}
+
 function switchTab(event){
     var id = event.currentTarget.id;
     if(visibleId == id) return;
     document.getElementById(visibleId).className = 'disabled';
-    visibleId = "insert"+event.currentTarget.id.substring(6)
+    visibleId = "insert"+event.currentTarget.id.substring(6);
+    resetValues[visibleId.substring(6)]();
     document.getElementById(visibleId).className = 'enabled';
 }
 
@@ -60,7 +163,7 @@ function updateRecords(res){
             var header = data.headers[i];
             col.push(header.name);
             for(var item of data.entries){
-                if(header.isExtKey){
+                if(header.isExtKey && item[i]){
                     var button = document.createElement("button");
                     button.id = item[i];
                     button.innerText = 'Vedi';
@@ -107,14 +210,12 @@ async function loadTable(event){
         type: 'selectRequest',
         tableName: tableName
     }, ENDPOINTS.query);
-    //console.log(res);
     updateRecords(res);
     activeTable = tableName;
 }
 
 function updateExtra(response){
     response.json().then((data)=>{
-        console.log(data)
         var children = extraHead.children
         while(children.length>0){ children[0].remove() }
 

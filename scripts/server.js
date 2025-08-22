@@ -13,7 +13,39 @@ const headers = {
 };
 
 const customSelect = {
-    'Richiesta': 'call getRichieste()'
+    'Richiesta': 'SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as ID_Descrizione FROM Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA;'
+}
+
+const customInsert = {
+    'Richiesta': {
+        prepareData: (data, request)=>{
+            var fileLink = null
+            if(data.params.file && data.params.file.data){
+                var ext = null
+                const buffer = Buffer.from(data.params.file.data.split(",")[1], "base64");
+                var i = 1;
+                var filename = path.basename(data.params.file.filename).split(".");
+                filename.pop();
+                filename = filename.join(".");
+                ext = path.extname(data.params.file.filename);
+                fileLink = filename
+                while(fs.existsSync("./res/" + fileLink + ext)){
+                    fileLink = filename + "(" + i + ")";
+                    i++;
+                }
+                fs.writeFileSync("./res/" + fileLink + ext, buffer, {flag:"w+"});
+                //override file to set up data properly for use in query
+                fileLink = path.resolve("./res/" + fileLink + ext);
+            }
+            var ip = request.socket.remoteAddress.split(":");
+            ip = ip[ip.length - 1];
+            return [data.params.name, data.params.email, ip, data.params.pos, fileLink, data.params.desc];
+        },
+        sql: 'SELECT InserisciRichiesta(?, ?, ?, ?, ?, ?) as link',
+        responseHandler: (response, result) => {
+            respond(response, 200, result[0].link);
+        }
+    }
 }
 
 const customQueries = {
@@ -31,7 +63,7 @@ var connection = mysql.createConnection({
 
 connection.connect();
 
-var contentTypesByExtension = { // May or may not be necessary, technically using binary with text type should work
+var contentTypesByExtension = { // Works without it but this gets rid of a warning about missing types on scripts
     '.html': "text/html",
     '.css':  "text/css",
     '.js':   "text/javascript"
@@ -52,12 +84,18 @@ function serveFile(filename, response){
         var typeHeaders = {};
         var contentType = contentTypesByExtension[path.extname(filename)];
         if (contentType) typeHeaders["Content-Type"] = contentType;
-        respond(response, 200, file);
+        respond(response, 200, file), typeHeaders;
     });
 }
 
-function respond(response, statusCode, body){
-    response.writeHead(statusCode, headers);
+function respond(response, statusCode, body, customHeaders){
+    var resHeaders = headers;
+    if(customHeaders){
+        for(var key in customHeaders){
+            resHeaders[key] = customHeaders[key];
+        }
+    }
+    response.writeHead(statusCode, resHeaders);
     if(body) response.write(body);
     response.end();
 }
@@ -71,26 +109,8 @@ async function parseQuery(request, response){
         var data = JSON.parse(postValue);
         switch(data.type){
             case 'insertRequest':
-                var tempname = null
-                var ext = null
-                if(data.photo.file){
-                    const buffer = Buffer.from(data.photo.file.split(",")[1], "base64");
-                    var i = 1;
-                    var filename = path.basename(data.photo.filename).split(".");
-                    filename.pop();
-                    filename = filename.join(".");
-                    ext = path.extname(data.photo.filename);
-                    tempname = filename
-                    while(fs.existsSync("./res/" + tempname + ext)){
-                        tempname = filename + "(" + i + ")";
-                        i++;
-                    }
-                    fs.writeFileSync("./res/" + tempname + ext, buffer, {flag:"w+"});
-                }
-                var ip = request.socket.remoteAddress.split(":");
-                ip = ip[ip.length - 1];
-                connection.query("SELECT InserisciRichiesta(?, ?, ?, ?, ?, ?) as link",
-                [data.name, data.email, ip, data.pos, (tempname && ext) ? path.resolve("./res/" + tempname + ext): null, data.desc],
+                var params = customInsert[data.tableName].prepareData(data, request);
+                connection.query(customInsert[data.tableName].sql, params,
                 (err, result) => {
                     if(err){
                         console.log(err);
@@ -98,7 +118,7 @@ async function parseQuery(request, response){
                         return;
                     }
                     else if(result){
-                        respond(response, 200, result[0].link);
+                        customInsert[data.tableName].responseHandler(response, result);
                         return;
                     }
                 })
