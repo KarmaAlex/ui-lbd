@@ -12,48 +12,190 @@
         <div>
             <button id="switchRichiesta" class="switch">Richiesta</button>
             <button id="switchMissione" class="switch">Missione</button>
+            <button id="switchSquadra" class="switch">Squadra</button>
+            <button id="switchUtente" class="switch">Utente</button>
+            <button id="switchAbilita" class="switch">Abilita</button>
+            <button id="switchPatente" class="switch">Patente</button>
+            <button id="switchMezzo" class="switch">Mezzo</button>
+            <button id="switchMateriale" class="switch">Materiale</button>
         </div>
 
-        <form id="insertRichiesta" class="disabled">
+        <div id="insertRichiesta" class="formDisabled">
             <h2>Inserisci i dati per la richiesta</h2>
-            <input type="text" placeholder="Nome" id="requestName">
-            <label class="errorText" id="requestNameErr" for="requestName"></label>
+            <input type="text" placeholder="Nome" id="richiestaName">
+            <label class="errorText" id="requestNameErr"></label>
 
-            <input type="email" placeholder="email" id="requestEmail">
-            <label class="errorText" id="requestEmailErr" for="requestEmail"></label>
+            <input type="email" placeholder="email" id="richiestaEmail">
+            <label class="errorText" id="requestEmailErr"></label>
 
-            <input type="text" placeholder="Posizione" id="requestPos">
-            <label class="errorText" id="requestPosErr" for="requestPos"></label>
+            <input type="text" placeholder="Posizione" id="richiestaPos">
+            <label class="errorText" id="requestPosErr"></label>
 
-            <input type="file" accept=".jpeg, .png, .jpg" placeholder="Carica foto" id="requestPhoto">
-            <label class="errorText" id="requestPhotoErr" for="requestPhoto"></label>
+            <input type="file" accept=".jpeg, .png, .jpg" placeholder="Carica foto" id="richiestaPhoto">
+            <label class="errorText" id="requestPhotoErr"></label>
 
-            <textarea maxlength="200" placeholder="Descrizione" id="requestDesc"></textarea>
-            <label class="errorText" id="requestDescErr" for="requestDesc"></label>
+            <textarea maxlength="200" placeholder="Descrizione" id="richiestaDesc"></textarea>
+            <label class="errorText" id="requestDescErr"></label>
 
             <button type="button" id="requestSubmit" class="submit">Invia</button>
-            <label id="requestSent" for="requestSubmit"></label>
-        </form>
+            <label id="requestSent"></label>
+        </div>
 
-        <form id="insertMissione" class="disabled">
-            <h2>Inserisci nuova Missione</h2>
+        <div id="insertMissione" class="formDisabled">
+            <h2>Crea nuova missione</h2>
             <label for="name">Posizione:</label>
             <input type="text" id="position" name="position">
 
             <label for="email">Squadra:</label>
             <input type="text" id="team" name="team">
 
+            <table id="missioneRichiesta">
+                <thead>
+
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+
+            <table id="missioneSquadra">
+                <thead>
+
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+
+            <table id="missioneAdmin">
+                <thead>
+
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+
             <button type="submit" class="submit">Inserisci</button>
-        </form>
+            <label id="missioneSent"></label>
+        </div>
+
+        <div id="insertSquadra" class="formDisabled">
+            <h2>Crea nuova squadra</h2>
+
+            <table id="squadraCaposquadra">
+
+            </table>
+
+            <table id="squadraMembri">
+
+            </table>
+
+            <button type="button" id="squadraSubmit" class="submit">Invia</button>
+            <label id="squadraSent"></label>
+        </div>
+            
+        <div id="insertUtente" class="formDisabled">
+            <h2>Inserisci nuovo utente</h2>
+            <input type="text" placeholder="Nome" id="utenteNome">
+            <label class="errorText" id="utenteNomeErr"></label>
+
+            <input type="text" placeholder="Cognome" id="utenteCognome">
+            <label class="errorText" id="utenteCognomeErr"></label>
+
+            <input type="text" placeholder="Codice Fiscale" id="utenteCF" maxlength="16">
+            <label class="errorText" id="utenteCFErr"></label>
+
+            <input type="text" placeholder="Luogo di nascita" id="utenteLuogo_nasc" maxlength="16">
+            <label class="errorText" id="requestPhotoErr"></label>
+
+            <label>Data di nascita:</label>
+            <input type="date" id="utenteData_nasc" max="2012-01-01" min="1920-01-01">
+            <label class="errorText" id="utenteData_nascErr"></label>
+
+
+            <table id="utentePatente">
+                <thead>
+
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+
+            <table id="utenteAbilita">
+                <thead>
+
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+
+            <button type="button" id="utenteSubmit" class="submit">Invia</button>
+            <label id="utenteSent"></label>
+        </div>
+
+        <div id="insertPatente" class="formDisabled">
+            <h2>Inserisci nuova patente</h2>
+            <input type="text" placeholder="Tipo" id="patenteTipo">
+            <label class="errorText" id="patenteTipo"></label>
+
+            <button type="button" id="patenteSubmit" class="submit">Invia</button>
+            <label id="patenteSent"></label>
+        </div>
+
+        <div id="insertAbilita" class="formDisabled">
+            <h2>Inserisci nuova abilità</h2>
+            <input type="text" placeholder="Descrizione" id="abilitaDesc">
+            <label class="errorText" id="abilitaDesc"></label>
+
+            <button type="button" id="abilitaSubmit" class="submit">Invia</button>
+            <label id="abilitaSent"></label>
+        </div>
+
+        <div id="insertMateriale" class="formDisabled">
+            <h2>Inserisci nuovo materiale</h2>
+            <input type="text" placeholder="Nome" id="materialeNome">
+            <label class="errorText" id="materialeNomeErr"></label>
+
+            <input type="text" placeholder="Descrizione" id="materialeDesc">
+            <label class="errorText" id="materialeDescErr"></label>
+
+            <input type="text" placeholder="Codice materiale" id="materialeCod_mat">
+            <label class="errorText" id="materialeCod_matErr"></label>
+
+            <button type="button" id="materialeSubmit" class="submit">Invia</button>
+            <label id="materialeSent"></label>
+        </div>
+
+        <div id="insertMezzo" class="formDisabled">
+            <h2>Inserisci nuovo mezzo</h2>
+            <input type="text" placeholder="Nome" id="mezzoNome">
+            <label class="errorText" id="mezzoNomeErr"></label>
+
+            <input type="text" placeholder="Descrizione" id="mezzoDesc">
+            <label class="errorText" id="mezzoDescErr"></label>
+
+            <input type="text" placeholder="Targa" id="mezzoTarga">
+            <label class="errorText" id="mezzoTargaErr"></label>
+
+            <button type="button" id="mezzoSubmit" class="submit">Invia</button>
+            <label id="mezzoSent"></label>
+        </div>
     </div>
 
     <div>
         <h2>Ricerca</h2>
         <div>
-            <button id="loadRichiesta" type="button" class="load">Richieste</button>
-            <button id="loadMissione" type="button" class="load">Missioni</button>
-            <button id="loadSquadra" type="button" class="load">Squadre</button>
-            <button id="loadUtente" type="button" class="load">Utenti</button>
+            <button id="loadRichiesta" class="load">Richieste</button>
+            <button id="loadMissione" class="load">Missioni</button>
+            <button id="loadSquadra" class="load">Squadre</button>
+            <button id="loadUtente" class="load">Utenti</button>
+            <button id="loadAbilita" class="load">Abilita</button>
+            <button id="loadPatente" class="load">Patenti</button>
+            <button id="loadMezzo" class="load">Mezzi</button>
+            <button id="loadMateriale" class="load">Materiali</button>
         </div>
 
         <form id="queryRichieste">

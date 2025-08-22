@@ -13,7 +13,7 @@ const headers = {
 };
 
 const customSelect = {
-    'Richiesta': 'SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as ID_Descrizione FROM Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA;'
+    'Richiesta': 'SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as EXT_Descrizione FROM Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA;'
 }
 
 const customInsert = {
@@ -70,7 +70,7 @@ var contentTypesByExtension = { // Works without it but this gets rid of a warni
 };
 
 function serveFile(filename, response){
-    fs.readFile(filename, "binary", function(err, file) {
+    fs.readFile(filename, "UTF-8", function(err, file) {
         if(err && err.code == "ENOENT") {
             respond(response, 404, "404 Not found");
             return;
@@ -84,7 +84,7 @@ function serveFile(filename, response){
         var typeHeaders = {};
         var contentType = contentTypesByExtension[path.extname(filename)];
         if (contentType) typeHeaders["Content-Type"] = contentType;
-        respond(response, 200, file), typeHeaders;
+        respond(response, 200, file, typeHeaders);
     });
 }
 
@@ -124,6 +124,11 @@ async function parseQuery(request, response){
                 })
                 break;
             case 'selectRequest':
+                const fieldTypes = {
+                    expand: 'EXT',
+                    add: 'ADD',
+                    select: 'SEL'
+                }
                 var res = {headers:[], entries:[]};
                 var sql = customSelect[data.tableName];
                 if(!sql) {
@@ -133,15 +138,27 @@ async function parseQuery(request, response){
                 var query = connection.query(sql);
                 query.on('fields', (fields)=>{
                     for(const field of fields){
-                        if(field.name.startsWith("ID")){
+                        if(field.name.startsWith(fieldTypes.expand)){
                             res.headers.push({
-                                name: field.name.substring(3),
-                                isExtKey: true
+                                name: field.name.substring(fieldTypes.expand.length + 1),
+                                fieldType: fieldTypes.expand
+                            })
+                        }
+                        else if(field.name.startsWith(fieldTypes.add)){
+                            res.headers.push({
+                                name: field.name.substring(fieldTypes.add.length + 1),
+                                fieldType: fieldTypes.add
+                            })
+                        }
+                        else if(field.name.startsWith(fieldTypes.select)){
+                            res.headers.push({
+                                name: field.name.substring(fieldTypes.select.length + 1),
+                                fieldType: fieldTypes.select
                             })
                         }
                         else res.headers.push({
                             name:field.name,
-                            isExtKey: false
+                            fieldType: null
                         });
                     }
                 })
@@ -199,7 +216,7 @@ function parseLogin(request, response){
 }
 
 function validateRequest(request, response){
-    const code = new URL(request.url).searchParams.get("code");
+    const code = new URL(`https://localhost:${port}${request.url}`).searchParams.get("code");
     if(code){
         connection.query("UPDATE Richiesta r SET verificato = true WHERE r.ID = (SELECT r2.ID FROM Richiesta r2 WHERE r2.string = ?);", code,
         (err)=>{ 
@@ -213,8 +230,7 @@ function validateRequest(request, response){
     } 
 }
 
-function parsePOST(request, response){
-    const uri = request.url;
+function parsePOST(request, response, uri){
     switch(uri){
         case "/query":
             parseQuery(request,response);
@@ -227,8 +243,7 @@ function parsePOST(request, response){
     }
 }
 
-function parseGET(request, response){
-    var uri = request.url;
+function parseGET(request, response, uri){
     switch(uri){
         case "/validate":
             validateRequest(request, response);
@@ -243,11 +258,12 @@ function parseGET(request, response){
 }
 
 https.createServer(options, function(request, response) {
+    var uri = new URL(`https://localhost:${port}${request.url}`).pathname;
     if (request.method && request.method == "POST") {
-        parsePOST(request, response);
+        parsePOST(request, response, uri);
     }
     else if(request.method && request.method == "GET"){
-        parseGET(request, response);
+        parseGET(request, response, uri);
     }
     else if(request.method && request.method == "OPTIONS"){
         respond(response, 204);
@@ -258,4 +274,4 @@ https.createServer(options, function(request, response) {
     
 }).listen(port);
 
-console.log("Server running at\n=> https://localhost:" + port + "/");
+console.log(`Server running at\n=> https://localhost:${port}/`);

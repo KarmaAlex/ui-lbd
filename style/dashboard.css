@@ -1,14 +1,19 @@
 body { 
     font-family: Arial, sans-serif; margin: 40px;
 }
-form {
+.formEnabled {
     margin-bottom: 30px;
+    display: block;
+}
+.formDisabled {
+    margin-bottom: 30px;
+    display: none;
 }
 label {
     display: block; margin-top: 10px;
 }
 input, select, textarea {
-    width: 10%;
+    width: 20%;
     padding: 8px;
     margin-top: 5px;
 }
@@ -59,9 +64,6 @@ button.switch {
 button.load {
     color: green;
 }
-.enabled {
-    display: block;
-}
-.disabled {
-    display: none;
+.errorText {
+    color: red;
 }

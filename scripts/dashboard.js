@@ -6,6 +6,8 @@ const ENDPOINTS = {
 
 var url = "https://localhost:8888"
 
+var inputData = {};
+
 var outputTable = document.getElementById("outputTable");
 var outputHead = document.getElementById("outputHead");
 var outputBody = document.getElementById("outputBody");
@@ -31,27 +33,22 @@ const submitHandlers = {
     'Richiesta' : async () => {
         const requestVars = {
             name: {
-                element: document.getElementById("requestName"),
                 error: document.getElementById("requestNameErr"),
                 required: true
             },
             email: {
-                element: document.getElementById("requestEmail"),
                 error: document.getElementById("requestEmailErr"),
                 required: true
             },
             pos: {
-                element: document.getElementById("requestPos"),
                 error: document.getElementById("requestPosErr"),
                 required: true
             },
             photo: {
-                element: document.getElementById("requestPhoto"),
                 error: document.getElementById("requestPhotoErr"),
                 required: false
             },
             desc: {
-                element: document.getElementById("requestDesc"),
                 error: document.getElementById("requestDescErr"),
                 required: false
             }
@@ -62,100 +59,161 @@ const submitHandlers = {
         for(item in requestVars){ requestVars[item].error.innerText=''; }
         requestSent.innerHTML = '';
         for(item in requestVars){
-            if(requestVars[item].required && requestVars[item].element.value == ''){
+            if(requestVars[item].required && inputData[item] == ''){
                 err = true;
                 requestVars[item].error.innerText = "Campo richiesto"
             }
         }
         if (err) return;
-        var response;
         var responseBody = {
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
-                name:requestVars.name.element.value,
-                email:requestVars.email.element.value,
-                pos:requestVars.pos.element.value,
-                desc: requestVars.desc.element.value,
-                file: {
-                    data: null,
-                    filename: null
-                }
+                name:inputData.name,
+                email:inputData.email,
+                pos: inputData.pos,
+                desc: inputData.desc,
+                file: inputData.file ? {
+                    data: inputData.file.data,
+                    filename: inputData.file.filename
+                } : null
             }
         }
-        if(requestVars.photo.element.files && requestVars.photo.element.files[0]){
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                responseBody.params.file.data = ev.target.result;
-                var name = requestVars.photo.element.value.split("\\");
-                name = name[name.length - 1];
-                responseBody.params.file.filename = name;
-            }
-            reader.readAsDataURL(requestVars.photo.element.files[0]);
-            response = await sendPOST(responseBody, ENDPOINTS.query);
-        }
-        else{
-            response = await sendPOST(responseBody, ENDPOINTS.query);
-        }
+        console.log(responseBody)
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response){
             await response.text().then((text)=>{
                 requestSent.innerHTML = "Verifica la richiesta andando su questo <a href="+text+">link</a>";
+                resetValues[responseBody.tableName]();
             })
         }
     }
 }
 
 const resetValues = {
-    "Richiesta": ()=>{
-        document.getElementById("requestName").value = '';
-        document.getElementById("requestNameErr").value = '';
-        document.getElementById("requestEmail").value = '';
-        document.getElementById("requestEmailErr").value = '';
-        document.getElementById("requestPos").value = '';
-        document.getElementById("requestPosErr").value = '';
-        document.getElementById("requestPhoto").value = '';
-        document.getElementById("requestPhotoErr").value = '';
-        document.getElementById("requestDesc").value = '';
-        document.getElementById("requestDescErr").value = '';
+    Richiesta: () => {
+        for(var child of document.getElementById("insertRichiesta").children){
+            if(child.tagName.toLowerCase() == 'label' || child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){
+                if(child.id == 'requestSent') continue;
+                child.value = '';
+            }
+        }
+    },
+    Utente: () => {
+        return;
+    },
+    Missione: () => {
+        return;
+    },
+    Squadra: () => {
+        return;
+    },
+    Materiale: () => {
+        return;
+    },
+    Patente: () => {
+        return;
+    },
+    Mezzo: () => {
+        return;
+    },
+    Abilita: () => {
+        return;
     }
 }
 
 var visibleId = 'insertRichiesta';
+var inputTableName = visibleId.substring(6);
 document.getElementById(visibleId).className = 'enabled';
 
 var activeTable = '';
 
-for(const element of switchBtns){
-    element.onclick = switchTab
+
+
+function init(){
+    for(const element of switchBtns){
+        element.onclick = switchTab
+    }
+
+    for (const element of loadBtns){
+        element.onclick = loadTable
+    }
+
+    for (const element of submitBtns){
+        element.onclick = submit
+    }
+
+    document.getElementById('switchRichiesta').click();
+    document.getElementById('loadRichiesta').click();
 }
 
-for (const element of loadBtns){
-    element.onclick = loadTable
+init();
+
+async function readFileAsync(file){
+    const reader = new FileReader();
+    return new Promise((resolve, reject) => {
+        reader.onerror = () => {
+            reader.abort();
+            reject(new DOMException("Failed to parse file"));
+        }
+        reader.onload = () => {
+            resolve(reader.result)
+        }
+        reader.readAsDataURL(file);
+    })
 }
 
-for (const element of submitBtns){
-    element.onclick = submit
+async function loadInputVars(){
+    for(var child of document.getElementById(visibleId).children){
+        if(child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){ //TODO find better solution
+            if(child.type && child.type == 'file'){ //This means only one file per submission
+                inputData.file = null;
+                if(child.files && child.files[0]){
+                    inputData.file = {};
+                    var name = child.value.split("\\");
+                    name = name[name.length - 1];
+                    inputData.file.filename = name;
+                    inputData.file.data = await readFileAsync(child.files[0]);
+                }
+            }
+            else{
+                inputData[child.id.substring(inputTableName.length).toLowerCase()] = child.value;
+            }
+        }
+    }
 }
 
-function submit(){
-    submitHandlers[visibleId.substring(6)]();
+async function submit(){
+    await loadInputVars();
+    submitHandlers[inputTableName]();
 }
 
 function switchTab(event){
     var id = event.currentTarget.id;
     if(visibleId == id) return;
-    document.getElementById(visibleId).className = 'disabled';
+    document.getElementById(visibleId).className = 'formDisabled';
     visibleId = "insert"+event.currentTarget.id.substring(6);
+    inputTableName = visibleId.substring(6);
     resetValues[visibleId.substring(6)]();
-    document.getElementById(visibleId).className = 'enabled';
+    inputData = {};
+    document.getElementById(visibleId).className = 'formEnabled';
 }
 
 async function extraButton(event){
-    await loadExtra(event.currentTarget.id, event.currentTarget.name);
+    await loadExtra(event.currentTarget.parentElement.id, event.currentTarget.name);
     extraModal.style.display = 'block';
 }
 
+function addEntry(event){
+    console.log(event.currentTarget.parentElement.id);
+}
+
 function updateRecords(res){
+    const fieldTypes = {
+        expand: 'EXT',
+        add: 'ADD',
+        select: 'SEL'
+    }
     res.json().then((data)=>{
         var dataTable = [];
         for(var i = 0; i<data.headers.length; i++){
@@ -163,13 +221,22 @@ function updateRecords(res){
             var header = data.headers[i];
             col.push(header.name);
             for(var item of data.entries){
-                if(header.isExtKey && item[i]){
-                    var button = document.createElement("button");
-                    button.id = item[i];
-                    button.innerText = 'Vedi';
-                    button.name = header.name;
-                    button.onclick = extraButton;
-                    col.push(button);
+                if(item[i] && header.fieldType && (header.fieldType == fieldTypes.expand || header.fieldType == fieldTypes.add)){
+                    var viewBtn = document.createElement("button");
+                    viewBtn.innerText = 'Vedi';
+                    viewBtn.name = header.name;
+                    viewBtn.onclick = extraButton;
+                    var div = document.createElement("div");
+                    div.id = item[i];
+                    div.appendChild(viewBtn);
+                    if(header.fieldType == fieldTypes.add){
+                        var addBtn = document.createElement("button");
+                        addBtn.innerText = 'Aggiungi';
+                        addBtn.name = header.name;
+                        addBtn.onclick = addEntry;
+                        div.appendChild(addBtn);
+                    }
+                    col.push(div);
                 }
                 else col.push(item[i]);
             }
