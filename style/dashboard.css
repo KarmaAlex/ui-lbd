@@ -67,3 +67,10 @@ button.load {
 .errorText {
     color: red;
 }
+.submit {
+    margin-top: 8px;
+    font-size: medium;
+}
+.selected {
+    background-color: green;
+}

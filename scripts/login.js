@@ -15,7 +15,6 @@ submitBtn.onclick = async (e)=>{
                 return b.toString(16).padStart(2, "0");
             }
         ).join("");
-        console.log(`username: ${username}; password hash: ${hashHex}`);
         //make request for authentication
         const res = await fetch(url+"/login",{
             method: "POST",
@@ -30,10 +29,10 @@ submitBtn.onclick = async (e)=>{
             passwdField.value = '';
         }
         else{
-            const response = await res.json();
-            sessionStorage.setItem("sessionToken", response.token);
+            //const response = await res.json();
+            //sessionStorage.setItem("sessionToken", response.token);
             //await new Promise(r => setTimeout(r, 5000));
-            window.location.href = "https://localhost:8888/home.html";
+            window.location.href = "https://localhost:8888/dashboard.html";
             
         }
         

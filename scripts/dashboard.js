@@ -8,29 +8,37 @@ var url = "https://localhost:8888"
 
 var inputData = {};
 
+var errorCodes = {
+    ER_DUP_ENTRY: 'Elemento duplicato',
+    ER_TABLEACCESS_DENIED_ERROR: 'Permessi insufficienti per vedere o modificare la tabella'
+}
+
 var outputTable = document.getElementById("outputTable");
-var outputHead = document.getElementById("outputHead");
-var outputBody = document.getElementById("outputBody");
 
 var extraModal = document.getElementById("extraModal");
 var extraClose = document.getElementById("extraClose");
 extraClose.onclick = (ev) => { extraModal.style.display = "none"; }
-window.onclick = (ev) => {
-    if(ev.target == extraModal){
-        extraModal.style.display = "none";
-    }
-}
+window.onclick = (ev) => { if(ev.target == extraModal) extraModal.style.display = "none"; }
 var extraLabel = document.getElementById("extraLabel");
-var extraTable = document.getElementById("extraTable");
-var extraHead = document.getElementById("extraHead");
-var extraBody = document.getElementById("extraBody");
 
 const switchBtns = document.getElementsByClassName("switch");
 const loadBtns = document.getElementsByClassName("load");
 const submitBtns = document.getElementsByClassName("submit");
 
+function checkRequired(requestVars){
+    var err = false;
+    for(item in requestVars){ requestVars[item].error.innerText=''; }
+    for(item in requestVars){
+        if(requestVars[item].required && inputData[item] == ''){
+            err = true;
+            requestVars[item].error.innerText = "Campo richiesto"
+        }
+    }
+    return !err;
+}
+
 const submitHandlers = {
-    'Richiesta' : async () => {
+    Richiesta : async () => {
         const requestVars = {
             name: {
                 error: document.getElementById("requestNameErr"),
@@ -53,18 +61,10 @@ const submitHandlers = {
                 required: false
             }
         }
-        var requestSent = document.getElementById("requestSent");
+        var requestSent = document.getElementById("richiestaSent");
 
-        var err = false;
-        for(item in requestVars){ requestVars[item].error.innerText=''; }
-        requestSent.innerHTML = '';
-        for(item in requestVars){
-            if(requestVars[item].required && inputData[item] == ''){
-                err = true;
-                requestVars[item].error.innerText = "Campo richiesto"
-            }
-        }
-        if (err) return;
+        if(!checkRequired(requestVars)) return;
+
         var responseBody = {
             type:'insertRequest',
             tableName: visibleId.substring(6),
@@ -79,7 +79,7 @@ const submitHandlers = {
                 } : null
             }
         }
-        console.log(responseBody)
+
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response){
             await response.text().then((text)=>{
@@ -87,48 +87,215 @@ const submitHandlers = {
                 resetValues[responseBody.tableName]();
             })
         }
+    },
+    Mezzo: async () => {
+        const requestVars = {
+            nome: {
+                error: document.getElementById("mezzoNomeErr"),
+                required: true
+            },
+            targa: {
+                error: document.getElementById("mezzoTargaErr"),
+                required: true
+            },
+            desc: {
+                error: document.getElementById("mezzoDescErr"),
+                required: false
+            }
+        };
+
+        if(!checkRequired(requestVars)) return;
+
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                nome:inputData.nome,
+                targa: inputData.targa,
+                desc: inputData.desc
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(!response.ok){
+            await response.text().then((text)=>{
+                alert(errorCodes[text]);
+            })
+        }
+        else resetValues[responseBody.tableName]();
+    },
+    Materiale: async () => {
+        const requestVars = {
+            nome: {
+                error: document.getElementById("materialeNomeErr"),
+                required: true
+            },
+            cod_mat: {
+                error: document.getElementById("materialeCod_matErr"),
+                required: true
+            },
+            desc: {
+                error: document.getElementById("materialeDescErr"),
+                required: false
+            }
+        };
+
+        if(!checkRequired(requestVars)) return;
+
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                nome:inputData.nome,
+                cod_mat: inputData.cod_mat,
+                desc: inputData.desc
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(!response.ok){
+            await response.text().then((text)=>{
+                alert(errorCodes[text]);
+            })
+        }
+        else resetValues[responseBody.tableName]();
+    },
+    Abilita: async () => {
+        const requestVars = {
+            desc: {
+                error: document.getElementById("abilitaDescErr"),
+                required: true
+            }
+        };
+
+        if(!checkRequired(requestVars)) return;
+
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                desc: inputData.desc
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(!response.ok){
+            await response.text().then((text)=>{
+                alert(errorCodes[text]);
+            })
+        }
+        else resetValues[responseBody.tableName]();
+    },
+    Patente: async () => {
+        const requestVars = {
+            tipo: {
+                error: document.getElementById("patenteTipoErr"),
+                required: true
+            },
+            numero: {
+                error: document.getElementById("patenteNumeroErr"),
+                required: true
+            }
+        };
+
+        if(!checkRequired(requestVars)) return;
+
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                tipo: inputData.tipo,
+                numero: inputData.numero
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(!response.ok){
+            await response.text().then((text)=>{
+                alert(errorCodes[text]);
+            })
+        }
+        else {
+            resetValues[responseBody.tableName]();
+            document.getElementById('patenteSent').innerText = 'Patente inviata con successo'
+        }
+    },
+    Missione: async () => {
+
+    },
+    Squadra: async () => {
+
+    },
+    Utente: async () => {
+
     }
+}
+
+function clearInputs(tableName){
+    inputData = {};
+    for(var child of document.getElementById("insert"+tableName).children){
+            if(child.tagName.toLowerCase() == 'label' || child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){
+                if(child.id == tableName.toLowerCase() + 'Sent') continue;
+                child.value = '';
+            }
+        }
 }
 
 const resetValues = {
     Richiesta: () => {
-        for(var child of document.getElementById("insertRichiesta").children){
-            if(child.tagName.toLowerCase() == 'label' || child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){
-                if(child.id == 'requestSent') continue;
-                child.value = '';
-            }
-        }
+        clearInputs('Richiesta');
     },
-    Utente: () => {
-        return;
+    Utente: async () => {
+        clearInputs('Utente');
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'UtenteIns',
+            fieldName: 'Abilita'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('utenteAbilita'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'UtenteIns',
+            fieldName: 'Patente'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('utentePatente'));
     },
-    Missione: () => {
-        return;
+    Missione: async () => {
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'MissioneIns',
+            fieldName: 'Admin'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('missioneAdmin'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'MissioneIns',
+            fieldName: 'Richieste'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('missioneRichiesta'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'MissioneIns',
+            fieldName: 'Squadre'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('missioneSquadra'));
     },
     Squadra: () => {
         return;
     },
     Materiale: () => {
-        return;
+        clearInputs('Materiale');
     },
     Patente: () => {
-        return;
+        clearInputs('Patente');
     },
     Mezzo: () => {
-        return;
+        clearInputs('Mezzo');
     },
     Abilita: () => {
-        return;
+        clearInputs('Abilita');
     }
 }
 
-var visibleId = 'insertRichiesta';
-var inputTableName = visibleId.substring(6);
-document.getElementById(visibleId).className = 'enabled';
-
+var visibleId = '';
+var inputTableName = '';
 var activeTable = '';
-
-
 
 function init(){
     for(const element of switchBtns){
@@ -191,43 +358,86 @@ async function submit(){
 function switchTab(event){
     var id = event.currentTarget.id;
     if(visibleId == id) return;
-    document.getElementById(visibleId).className = 'formDisabled';
+    if(visibleId) document.getElementById(visibleId).className = 'formDisabled';
     visibleId = "insert"+event.currentTarget.id.substring(6);
     inputTableName = visibleId.substring(6);
     resetValues[visibleId.substring(6)]();
-    inputData = {};
     document.getElementById(visibleId).className = 'formEnabled';
 }
 
 async function extraButton(event){
-    await loadExtra(event.currentTarget.parentElement.id, event.currentTarget.name);
-    extraModal.style.display = 'block';
+    var tableName = '';
+    var curElement = event.currentTarget;
+    while(curElement.parentElement){
+        console.log(curElement.parentElement);
+        if(curElement.parentElement.tagName == 'TABLE'){
+            tableName = curElement.parentElement.getAttribute('name');
+            break;
+        }
+        curElement = curElement.parentElement;
+    }
+    if(!tableName) tableName = activeTable;
+
+    var res = await sendPOST({
+        type: 'queryRequest',
+        tableName: tableName,
+        fieldName: event.currentTarget.name,
+        id: event.currentTarget.parentElement.id.substring(event.currentTarget.name.length)
+    }, ENDPOINTS.query);
+    if(res.ok) {
+        updateTable(res, document.getElementById('extraTable'));
+        extraModal.style.display = 'block';
+    }
+    else {
+        res.text().then((value)=>{
+            alert(errorCodes[value]);
+        })
+    }
+    
 }
 
 function addEntry(event){
     console.log(event.currentTarget.parentElement.id);
 }
 
-function updateRecords(res){
+function selectSingle(event){
+    //console.log(`pressed button with name ${event.currentTarget.name} and id ${event.currentTarget.id}`);
+    var name = event.currentTarget.name;
+    if(!inputData.currentSelected){
+        inputData.currentSelected = {};
+        inputData.currentSelected[name] = '';
+    }
+    if(inputData.currentSelected[name]) document.getElementById(name+inputData.currentSelected[name]).className = '';
+    inputData.currentSelected[name] = event.currentTarget.id.substring(name.length);
+    event.currentTarget.className = 'selected'
+}
+
+function selectMultiple(event){
+    console.log(`pressed button with name ${event.currentTarget.name} and id ${event.currentTarget.id}`);
+}
+
+function updateTable(res, table){
     const fieldTypes = {
         expand: 'EXT',
         add: 'ADD',
-        select: 'SEL'
-    }
+        select: 'SEL',
+        selectMultiple: 'MSEL'
+    };
     res.json().then((data)=>{
         var dataTable = [];
         for(var i = 0; i<data.headers.length; i++){
             var col = [];
             var header = data.headers[i];
-            col.push(header.name);
+            if(header.fieldType == fieldTypes.selectMultiple || header.fieldType == fieldTypes.select) col.push('Seleziona');
+            else col.push(header.name);
             for(var item of data.entries){
-                if(item[i] && header.fieldType && (header.fieldType == fieldTypes.expand || header.fieldType == fieldTypes.add)){
+                if(item[i] && header.fieldType == fieldTypes.expand || header.fieldType == fieldTypes.add){
                     var viewBtn = document.createElement("button");
                     viewBtn.innerText = 'Vedi';
                     viewBtn.name = header.name;
                     viewBtn.onclick = extraButton;
                     var div = document.createElement("div");
-                    div.id = item[i];
+                    div.id = header.name+item[i];
                     div.appendChild(viewBtn);
                     if(header.fieldType == fieldTypes.add){
                         var addBtn = document.createElement("button");
@@ -238,22 +448,32 @@ function updateRecords(res){
                     }
                     col.push(div);
                 }
+                else if(item[i] && header.fieldType == fieldTypes.selectMultiple || header.fieldType == fieldTypes.select){
+                    var selBtn = document.createElement("button");
+                    selBtn.innerText = 'Seleziona';
+                    selBtn.name = header.name;
+                    selBtn.id = header.name+item[i];
+                    if(header.fieldType == fieldTypes.select) selBtn.onclick = selectSingle;
+                    else selBtn.onclick = selectMultiple;
+                    col.push(selBtn);
+                }
                 else col.push(item[i]);
             }
             dataTable.push(col);
         }
 
-        var children = outputHead.children
-        while(children.length>0){children[0].remove()}
+        while(table.children.length > 0) table.children[0].remove();
+
+        var outputHead = document.createElement('thead');
+        var outputBody = document.createElement('tbody');
+        table.appendChild(outputHead);
+        table.appendChild(outputBody);
 
         for(var i = 0; i < dataTable.length; i++){
             var th = document.createElement("th");
             th.innerText = dataTable[i][0];
             outputHead.appendChild(th);
         }
-        
-        children = outputBody.children;
-        while(children.length>0){children[0].remove()}
 
         for(var i = 1; i < dataTable[0].length; i++){
             var tr = document.createElement("tr");
@@ -268,7 +488,6 @@ function updateRecords(res){
             outputBody.appendChild(tr);
         }
     })
-    
 }
 
 async function loadTable(event){
@@ -277,44 +496,16 @@ async function loadTable(event){
         type: 'selectRequest',
         tableName: tableName
     }, ENDPOINTS.query);
-    updateRecords(res);
-    activeTable = tableName;
-}
-
-function updateExtra(response){
-    response.json().then((data)=>{
-        var children = extraHead.children
-        while(children.length>0){ children[0].remove() }
-
-        for(var key of data.headers){
-            var th = document.createElement("th")
-            th.innerText = key
-            extraHead.appendChild(th)
-        }
-        
-        children = extraBody.children;
-        while(children.length>0){ children[0].remove() }
-
-        for(var entry of data.entries){
-            var tr = document.createElement("tr");
-            for(var item of entry){
-                var td = document.createElement("td");
-                td.innerText = item;
-                tr.appendChild(td);
-            }
-            extraBody.appendChild(tr);
-        }
-    })
-}
-
-async function loadExtra(id, fieldName){
-    var res = await sendPOST({
-        type: 'queryRequest',
-        tableName: activeTable,
-        fieldName: fieldName,
-        id: id
-    }, ENDPOINTS.query);
-    updateExtra(res);
+    if(res.ok) {
+        updateTable(res, document.getElementById('outputTable'));
+        activeTable = tableName;
+    }
+    else{
+        res.text().then((data)=>{
+            alert(errorCodes[data]);
+        })
+    }
+    
 }
 
 async function sendPOST(responseBody, endpoint){
@@ -325,11 +516,5 @@ async function sendPOST(responseBody, endpoint){
         method:"POST",
         body: JSON.stringify(responseBody)
     });
-    if(res.ok){
-        return res;
-    }
-    else{
-        return null;
-        //TODO: Error handling
-    }
+    return res;
 }

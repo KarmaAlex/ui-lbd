@@ -14,7 +14,7 @@
             <button id="switchMissione" class="switch">Missione</button>
             <button id="switchSquadra" class="switch">Squadra</button>
             <button id="switchUtente" class="switch">Utente</button>
-            <button id="switchAbilita" class="switch">Abilita</button>
+            <button id="switchAbilita" class="switch">Abilità</button>
             <button id="switchPatente" class="switch">Patente</button>
             <button id="switchMezzo" class="switch">Mezzo</button>
             <button id="switchMateriale" class="switch">Materiale</button>
@@ -37,61 +37,31 @@
             <textarea maxlength="200" placeholder="Descrizione" id="richiestaDesc"></textarea>
             <label class="errorText" id="requestDescErr"></label>
 
-            <button type="button" id="requestSubmit" class="submit">Invia</button>
-            <label id="requestSent"></label>
+            <button id="requestSubmit" class="submit">Invia</button>
+            <label id="richiestaSent"></label>
         </div>
 
         <div id="insertMissione" class="formDisabled">
             <h2>Crea nuova missione</h2>
-            <label for="name">Posizione:</label>
-            <input type="text" id="position" name="position">
+            <label>Seleziona la richiesta</label>
+            <table id="missioneRichiesta" name="Richiesta"></table>
+            <label>Seleziona la squadra</label>
+            <table id="missioneSquadra" name="Squadra"></table>
+            <label>Seleziona il responsabile</label>
+            <table id="missioneAdmin" name="Utente"></table>
 
-            <label for="email">Squadra:</label>
-            <input type="text" id="team" name="team">
-
-            <table id="missioneRichiesta">
-                <thead>
-
-                </thead>
-                <tbody>
-
-                </tbody>
-            </table>
-
-            <table id="missioneSquadra">
-                <thead>
-
-                </thead>
-                <tbody>
-                    
-                </tbody>
-            </table>
-
-            <table id="missioneAdmin">
-                <thead>
-
-                </thead>
-                <tbody>
-                    
-                </tbody>
-            </table>
-
-            <button type="submit" class="submit">Inserisci</button>
+            <button class="submit">Inserisci</button>
             <label id="missioneSent"></label>
         </div>
 
         <div id="insertSquadra" class="formDisabled">
             <h2>Crea nuova squadra</h2>
 
-            <table id="squadraCaposquadra">
+            <table id="squadraCaposquadra"></table>
 
-            </table>
+            <table id="squadraMembri"></table>
 
-            <table id="squadraMembri">
-
-            </table>
-
-            <button type="button" id="squadraSubmit" class="submit">Invia</button>
+            <button id="squadraSubmit" class="submit">Invia</button>
             <label id="squadraSent"></label>
         </div>
             
@@ -114,32 +84,21 @@
             <label class="errorText" id="utenteData_nascErr"></label>
 
 
-            <table id="utentePatente">
-                <thead>
+            <table id="utentePatente"></table>
 
-                </thead>
-                <tbody>
-                    
-                </tbody>
-            </table>
+            <table id="utenteAbilita"></table>
 
-            <table id="utenteAbilita">
-                <thead>
-
-                </thead>
-                <tbody>
-                    
-                </tbody>
-            </table>
-
-            <button type="button" id="utenteSubmit" class="submit">Invia</button>
+            <button id="utenteSubmit" class="submit">Invia</button>
             <label id="utenteSent"></label>
         </div>
 
         <div id="insertPatente" class="formDisabled">
             <h2>Inserisci nuova patente</h2>
-            <input type="text" placeholder="Tipo" id="patenteTipo">
-            <label class="errorText" id="patenteTipo"></label>
+            <input type="text" placeholder="Tipo" id="patenteTipo" maxlength="3">
+            <label class="errorText" id="patenteTipoErr"></label>
+
+            <input type="text" placeholder="Numero" id="patenteNumero" maxlength="10">
+            <label class="errorText" id="patenteNumeroErr"></label>
 
             <button type="button" id="patenteSubmit" class="submit">Invia</button>
             <label id="patenteSent"></label>
@@ -192,7 +151,7 @@
             <button id="loadMissione" class="load">Missioni</button>
             <button id="loadSquadra" class="load">Squadre</button>
             <button id="loadUtente" class="load">Utenti</button>
-            <button id="loadAbilita" class="load">Abilita</button>
+            <button id="loadAbilita" class="load">Abilità</button>
             <button id="loadPatente" class="load">Patenti</button>
             <button id="loadMezzo" class="load">Mezzi</button>
             <button id="loadMateriale" class="load">Materiali</button>
@@ -206,46 +165,14 @@
         </form>
 
         <h2>Record</h2>
-        <table id="outputTable">
-            <thead id="outputHead">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th class="actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="outputBody">
-                <tr>
-                    <td>1</td>
-                    <td>Sample Name</td>
-                    <td>sample@email.com</td>
-                </tr>
-            </tbody>
-        </table>
+        <table id="outputTable"></table>
     </div>
     
     <div class="modal" id="extraModal">
         <div class="modalContent">
             <span class="closeModal" id="extraClose">&times;</span>
             <label id="extraLabel" for="extraTable"></label>
-            <table id="extraTable">
-            <thead id="extraHead">
-                <tr>
-                    <th>ID</th>
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th class="actions">Actions</th>
-                </tr>
-            </thead>
-            <tbody id="extraBody">
-                <tr>
-                    <td>1</td>
-                    <td>Sample Name</td>
-                    <td>sample@email.com</td>
-                </tr>
-            </tbody>
-        </table>
+            <table id="extraTable"></table>
         </div>
     </div>
 
