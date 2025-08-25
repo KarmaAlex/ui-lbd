@@ -58,7 +58,7 @@ const submitHandlers = {
             },
             desc: {
                 error: document.getElementById("requestDescErr"),
-                required: false
+                required: true
             }
         }
         var requestSent = document.getElementById("richiestaSent");
@@ -81,10 +81,15 @@ const submitHandlers = {
         }
 
         var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(response){
+        if(response.ok){
             await response.text().then((text)=>{
                 requestSent.innerHTML = "Verifica la richiesta andando su questo <a href="+text+">link</a>";
                 resetValues[responseBody.tableName]();
+            })
+        }
+        else{
+            await response.text().then((text)=>{
+                requestSent.innerText = text;
             })
         }
     },
@@ -220,10 +225,96 @@ const submitHandlers = {
 
     },
     Squadra: async () => {
+        var caposquadraErr = document.getElementById('squadraCaposquadraErr');
+        var membriErr = document.getElementById('squadraMembriErr');
+        var squadraSent = document.getElementById('squadraSent');
+        caposquadraErr.innerText = '';
+        membriErr.innerText = '';
+        var error = false;
+        if(!inputData.currentSelected.Caposquadra){
+            caposquadraErr.innerText = 'Selezionare un caposquadra';
+            error = true;
+        }
+        if(!inputData.currentSelected.Utenti){
+            membriErr.innerText = 'Selezionare almeno un membro';
+            error = true;
+        }
+        if(error) return;
 
+        var responseBody = {
+            type: 'insertRequest',
+            tableName: visibleId.substring(6),
+            params: {
+                caposquadra: inputData.currentSelected.Caposquadra,
+                membri: inputData.currentSelected.Utenti
+            }
+        }
+
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(response.ok){
+            squadraSent.innerHTML = 'Squadra creata con successo'
+            resetValues[responseBody.tableName]();
+        }
+        else{
+            await response.text().then((text)=>{
+                squadraSent.innerText = text;
+            })
+        }
     },
     Utente: async () => {
+        const requestVars = {
+            nome_utente: {
+                error: document.getElementById("utenteNome_utenteErr"),
+                required: true
+            },
+            nome: {
+                error: document.getElementById("utenteNomeErr"),
+                required: true
+            },
+            cognome: {
+                error: document.getElementById("utenteCognomeErr"),
+                required: true
+            },
+            cf: {
+                error: document.getElementById("utenteCFErr"),
+                required: true
+            },
+            luogo_nasc: {
+                error: document.getElementById("utenteLuogo_nascErr"),
+                required: true
+            },
+            data_nasc: {
+                error: document.getElementById("utenteData_nascErr"),
+                required: true
+            }
+        };
 
+        if(!checkRequired(requestVars)) return;
+
+        var responseBody = {
+            type:'insertRequest',
+            tableName: visibleId.substring(6),
+            params:{
+                nome_utente: inputData.nome_utente,
+                nome: inputData.nome,
+                cognome: inputData.cognome,
+                cf: inputData.cf,
+                luogo_nasc: inputData.luogo_nasc,
+                data_nasc: inputData.data_nasc,
+                abilita: inputData.currentSelected.Abilita,
+                patente: inputData.currentSelected.Patente
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(!response.ok){
+            await response.text().then((text)=>{
+                alert(errorCodes[text]);
+            })
+        }
+        else {
+            resetValues[responseBody.tableName]();
+            document.getElementById('patenteSent').innerText = 'Utente creato con successo'
+        }
     }
 }
 
@@ -245,39 +336,58 @@ const resetValues = {
         clearInputs('Utente');
         var res = await sendPOST({
             type: 'queryRequest',
-            tableName: 'UtenteIns',
+            tableName: 'insUtente',
             fieldName: 'Abilita'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('utenteAbilita'));
         var res = await sendPOST({
             type: 'queryRequest',
-            tableName: 'UtenteIns',
+            tableName: 'insUtente',
             fieldName: 'Patente'
         }, ENDPOINTS.query);
-        updateTable(res, document.getElementById('utentePatente'));
+        if(res.ok){
+            updateTable(res, document.getElementById('utentePatente'));
+        }
+        else{
+            res.text().then((text)=>{
+                alert(errorCodes[text] + ' Patente');
+            })
+        }
+        
     },
     Missione: async () => {
         var res = await sendPOST({
             type: 'queryRequest',
-            tableName: 'MissioneIns',
+            tableName: 'insMissione',
             fieldName: 'Admin'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('missioneAdmin'));
         var res = await sendPOST({
             type: 'queryRequest',
-            tableName: 'MissioneIns',
+            tableName: 'insMissione',
             fieldName: 'Richieste'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('missioneRichiesta'));
         var res = await sendPOST({
             type: 'queryRequest',
-            tableName: 'MissioneIns',
+            tableName: 'insMissione',
             fieldName: 'Squadre'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('missioneSquadra'));
     },
-    Squadra: () => {
-        return;
+    Squadra: async () => {
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insSquadra',
+            fieldName: 'Caposquadra'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('squadraCaposquadra'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insSquadra',
+            fieldName: 'Membri'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('squadraMembri'));
     },
     Materiale: () => {
         clearInputs('Materiale');
@@ -369,7 +479,6 @@ async function extraButton(event){
     var tableName = '';
     var curElement = event.currentTarget;
     while(curElement.parentElement){
-        console.log(curElement.parentElement);
         if(curElement.parentElement.tagName == 'TABLE'){
             tableName = curElement.parentElement.getAttribute('name');
             break;
@@ -382,7 +491,7 @@ async function extraButton(event){
         type: 'queryRequest',
         tableName: tableName,
         fieldName: event.currentTarget.name,
-        id: event.currentTarget.parentElement.id.substring(event.currentTarget.name.length)
+        id: event.currentTarget.parentElement.id.substring(event.currentTarget.name.length+3)
     }, ENDPOINTS.query);
     if(res.ok) {
         updateTable(res, document.getElementById('extraTable'));
@@ -401,22 +510,53 @@ function addEntry(event){
 }
 
 function selectSingle(event){
-    //console.log(`pressed button with name ${event.currentTarget.name} and id ${event.currentTarget.id}`);
     var name = event.currentTarget.name;
-    if(!inputData.currentSelected){
-        inputData.currentSelected = {};
-        inputData.currentSelected[name] = '';
-    }
-    if(inputData.currentSelected[name]) document.getElementById(name+inputData.currentSelected[name]).className = '';
-    inputData.currentSelected[name] = event.currentTarget.id.substring(name.length);
+    var curId = event.currentTarget.id.substring(name.length+3);
+    if(!inputData.currentSelected)inputData.currentSelected = {};
+    if(!inputData.currentSelected[name]) inputData.currentSelected[name] = '';
+    if (name == 'Caposquadra' && checkLeader(curId)) return;
+    if(inputData.currentSelected[name]) document.getElementById('ins'+name+inputData.currentSelected[name]).className = '';
+    inputData.currentSelected[name] = curId;
     event.currentTarget.className = 'selected'
 }
 
+function checkLeader(curId){
+    if(inputData.currentSelected.Caposquadra){
+        // Don't let user select leader to also be on the team
+        if (curId == inputData.currentSelected.Caposquadra) return true
+    }
+    var array = inputData.currentSelected.Utenti;
+    // De-select user if selected as leader
+    if(array && array.includes(curId)){
+        document.getElementById('insUtenti'+curId).className = '';
+        inputData.currentSelected.Utenti = array.filter(item => item != curId)
+    }
+    return false;
+}
+
 function selectMultiple(event){
-    console.log(`pressed button with name ${event.currentTarget.name} and id ${event.currentTarget.id}`);
+    var name = event.currentTarget.name;
+    var curId = event.currentTarget.id.substring(name.length+3)
+    if(!inputData.currentSelected) inputData.currentSelected = {};
+    if(!inputData.currentSelected[name]) inputData.currentSelected[name] = [];
+    var array = inputData.currentSelected[name];
+    if(name == 'Utenti' && checkLeader(curId)) return;
+    if(array.includes(curId)) {
+        document.getElementById('ins'+name+curId).className = '';
+        inputData.currentSelected[name] = array.filter(item => item != curId);
+    }
+    else{
+        array.push(curId);
+        event.currentTarget.className = 'selected';
+    }
+    //console.log(`pressed button with name ${event.currentTarget.name} and id ${event.currentTarget.id}`);
 }
 
 function updateTable(res, table){
+    var id = '';
+    if (table.id == 'extraTable') id = 'ext';
+    else if (table.id == 'outputTable') id = 'out';
+    else id = 'ins';
     const fieldTypes = {
         expand: 'EXT',
         add: 'ADD',
@@ -437,7 +577,7 @@ function updateTable(res, table){
                     viewBtn.name = header.name;
                     viewBtn.onclick = extraButton;
                     var div = document.createElement("div");
-                    div.id = header.name+item[i];
+                    div.id = id+header.name+item[i];
                     div.appendChild(viewBtn);
                     if(header.fieldType == fieldTypes.add){
                         var addBtn = document.createElement("button");
@@ -452,7 +592,7 @@ function updateTable(res, table){
                     var selBtn = document.createElement("button");
                     selBtn.innerText = 'Seleziona';
                     selBtn.name = header.name;
-                    selBtn.id = header.name+item[i];
+                    selBtn.id = id+header.name+item[i];
                     if(header.fieldType == fieldTypes.select) selBtn.onclick = selectSingle;
                     else selBtn.onclick = selectMultiple;
                     col.push(selBtn);

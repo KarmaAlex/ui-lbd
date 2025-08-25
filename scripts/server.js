@@ -2,8 +2,8 @@ var https = require("https"), path = require("path"), fs = require("fs"), mysql 
 
 var connection = mysql.createConnection({ //TODO: Remove
     host     : 'localhost',
-    user     : 'user',
-    password : '04f8996da763b7a969b1028ee3007569eaf3a635486ddab211d512c85b9df8fb',
+    user     : 'admin',
+    password : '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
     database : 'soccorso'
 });
 
@@ -69,9 +69,21 @@ const customInsert = {
         responseHandler: (response, result) => {}
     },
     Squadra: {
-        prepareData: (data) => {},
-        sql: '',
-        responseHandler: (response, result) => {}
+        prepareData: (data) => {
+            if(data.params.caposquadra && data.params.membri){
+                var membri = data.params.membri;
+                var id_squadra;
+                connection.query('SELECT creaSquadra(?) AS id_squadra', data.params.caposquadra, (err, res)=>{
+                    if(err) console.log(err.message);
+                    else id_squadra = res[0].id_squadra;
+                    for(var i = 0; i < membri.length; i++){
+                        connection.query('INSERT INTO assegna_squadra(ID_SQUADRA, ID_UTENTE) VALUES (?, ?);', [id_squadra, membri[i]]).on('error',(err)=>{ console.log(err.message); })
+                    }
+                });
+                return;
+            } //TODO: fix timing issue with this query
+        },
+        sql: ''
     },
     Utente: {
         prepareData: (data) => {},
@@ -80,23 +92,19 @@ const customInsert = {
     },
     Abilita: {
         prepareData: (data) => { return [data.params.desc] },
-        sql: 'INSERT INTO Abilita(`desc`) values (?);',
-        responseHandler: (response, result) => {}
+        sql: 'INSERT INTO Abilita(`desc`) values (?);'
     },
     Patente: {
         prepareData: (data) => { return [data.params.tipo, data.params.numero] },
-        sql: 'INSERT INTO Patente(tipo, numero) values(?, ?);',
-        responseHandler: (response, result) => { respond(response, 200) }
+        sql: 'INSERT INTO Patente(tipo, numero) values(?, ?);'
     },
     Mezzo: {
         prepareData: (data) => { return [data.params.nome, data.params.desc, data.params.targa] },
-        sql: 'INSERT INTO Mezzo(nome, desc, targa) values (?, ?, ?);',
-        responseHandler: (response, result) => { respond(response, 200) }
+        sql: 'INSERT INTO Mezzo(nome, desc, targa) values (?, ?, ?);'
     },
     Materiale: {
         prepareData: (data) => { return [data.params.nome, data.params.desc, data.params.cod_mat]},
-        sql: 'INSERT INTO Materiale(nome, `desc`, cod_mat) values (?, ?, ?);',
-        responseHandler: (response, result) => { respond(response, 200) }
+        sql: 'INSERT INTO Materiale(nome, `desc`, cod_mat) values (?, ?, ?);'
     }
 }
 
@@ -104,9 +112,9 @@ const customQueries = {
     Richiesta:{
         Descrizione: 'SELECT d.posizione as Posizione, d.foto as Foto, d.descrizione as Descrizione FROM Desc_richiesta d WHERE d.ID = ?'
     },
-    MissioneIns: {
+    insMissione: {
         Richieste: 'SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as EXT_Descrizione, r.ID as SEL_Richiesta FROM (Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA) WHERE r.verificato = 1 AND r.ID not in (SELECT r1.ID FROM Richiesta r1 JOIN Missione m WHERE r1.ID = m.ID_RICHIESTA ) AND r.stato = "in attesa";',
-        Admin: 'SELECT u.nome_utente as "Nome utente", u.ID as SEL_Seleziona FROM Utente u WHERE u.admin = true;',
+        Admin: 'SELECT u.nome_utente as "Nome utente", u.ID as SEL_Utente FROM Utente u WHERE u.admin = true;',
         Squadre: 'SELECT s.ID as "Numero squadra", u.nome_utente AS Caposquadra, s.ID as EXT_Membri, s.ID as SEL_Squadra FROM Squadra s JOIN Utente u WHERE s.ID_CAPO = u.ID;'
     },
     Missione: {
@@ -116,14 +124,18 @@ const customQueries = {
         Commento: 'SELECT c.testo as Testo, u.nome_utente as "Inserito da" FROM Commento c JOIN Utente u ON c.ID_ADMIN = u.ID WHERE c.ID_MISSIONE = ?;',
         Aggiornamento: 'SELECT a.testo as Testo, a.`timestamp` as "Creato" FROM Aggiornamento a WHERE a.ID_MISSIONE = ?;'
     },
-    UtenteIns: {
-        Abilita: 'SELECT a.desc as Descrizione, a.ID as MSEL_Abilita FROM Abilita a',
-        Patente: 'SELECT p.tipo as TIPO, p.numero as Numero, p.ID as MSEL_Patente from Patente p'
+    insUtente: {
+        Abilita: 'SELECT a.desc as Descrizione, a.ID as MSEL_Abilita FROM Abilita a;',
+        Patente: 'SELECT p.tipo as TIPO, p.numero as Numero, p.ID as MSEL_Patente from Patente p;'
     },
     Utente: {
         Anagrafica: 'SELECT a.nome as Nome, a.cognome as Cognome, a.cf as "Codice fiscale", a.luogo_nasc as "Luogo di nascita", a.data_nasc as "Data di nascita" From Anagrafica a WHERE a.ID_UTENTE = ?;',
         Abilita: 'SELECT a.`desc` as Descrizione FROM Abilita a JOIN assegna_abilita aa ON a.ID = aa.ID_ABILITA WHERE aa.ID_UTENTE = ?;',
         Patente: 'SELECT p.numero as Numero, p.tipo as Tipo FROM Patente p JOIN assegna_patente ap ON p.ID = ap.ID_PATENTE WHERE ap.ID_UTENTE = ?'
+    },
+    insSquadra: {
+        Caposquadra: 'SELECT u.nome_utente as "Nome utente", u.ID as SEL_Caposquadra FROM Utente u;',
+        Membri: 'SELECT u.nome_utente as "Nome utente", u.ID as MSEL_Utenti FROM Utente u;'
     },
     Squadra: {
         Membri: 'SELECT u.nome_utente as "Nome utente" FROM Utente u JOIN (SELECT ass.ID_UTENTE, ass.ID_SQUADRA FROM Squadra s JOIN assegna_squadra ass ON s.ID = ass.ID_SQUADRA AND s.ID = ? ) s ON u.ID = s.ID_UTENTE'
@@ -206,26 +218,33 @@ function getTableHeader(field){
 
 async function parseQuery(request, response){
     var postValue = '';
-    request.on("data", function(chunk){
+    request.on("data", (chunk) => {
         postValue += chunk;
     })
     var error = false;
-    request.on("end",_ => {
+    request.on("end", () => {
         var data = JSON.parse(postValue);
         switch(data.type){
             case 'insertRequest':
                 var params = customInsert[data.tableName].prepareData(data, request);
-                connection.query(customInsert[data.tableName].sql, params,
+                //If handler has a sql field but it's left empty assume everything required is done in data preparation
+                if(customInsert[data.tableName].sql == ''){
+                    respond(response, 200);
+                    return;
+                }
+                if(customInsert[data.tableName].sql) connection.query(customInsert[data.tableName].sql, params,
                 (err, result) => {
                     if(err){
                         respond(response, 500, err.code);
                         return;
                     }
                     else if(result){
-                        customInsert[data.tableName].responseHandler(response, result);
+                        if(customInsert[data.tableName].responseHandler) customInsert[data.tableName].responseHandler(response, result);
+                        else respond(response, 200);
                         return;
                     }
                 })
+                else respond(response, 404);
                 break;
             case 'selectRequest':
                 var res = {headers:[], entries:[]};
@@ -298,7 +317,7 @@ async function parseQuery(request, response){
 
 function parseLogin(request, response){
     var value = ''
-    request.on('data', (chunk)=>{
+    request.on('data', (chunk) => {
         value += chunk;
     })
     request.on('end', () => {

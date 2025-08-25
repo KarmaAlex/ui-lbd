@@ -74,3 +74,6 @@ button.load {
 .selected {
     background-color: green;
 }
+.descriptor {
+    font-weight: bold;
+}

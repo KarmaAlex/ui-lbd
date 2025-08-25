@@ -31,6 +31,7 @@
             <input type="text" placeholder="Posizione" id="richiestaPos">
             <label class="errorText" id="requestPosErr"></label>
 
+            <label class="descriptor">Carica foto:</label>
             <input type="file" accept=".jpeg, .png, .jpg" placeholder="Carica foto" id="richiestaPhoto">
             <label class="errorText" id="requestPhotoErr"></label>
 
@@ -43,12 +44,12 @@
 
         <div id="insertMissione" class="formDisabled">
             <h2>Crea nuova missione</h2>
-            <label>Seleziona la richiesta</label>
+            <label class="descriptor">Seleziona la richiesta:</label>
             <table id="missioneRichiesta" name="Richiesta"></table>
-            <label>Seleziona la squadra</label>
+            <label class="descriptor">Seleziona la squadra:</label>
             <table id="missioneSquadra" name="Squadra"></table>
-            <label>Seleziona il responsabile</label>
-            <table id="missioneAdmin" name="Utente"></table>
+            <label class="descriptor">Seleziona il responsabile:</label>
+            <table id="missioneAdmin"></table>
 
             <button class="submit">Inserisci</button>
             <label id="missioneSent"></label>
@@ -56,10 +57,12 @@
 
         <div id="insertSquadra" class="formDisabled">
             <h2>Crea nuova squadra</h2>
-
+            <label class="descriptor">Seleziona caposquadra:</label>
             <table id="squadraCaposquadra"></table>
-
+            <label id="squadraCaposquadraErr" class="errorText"></label>
+            <label class="descriptor">Seleziona membri:</label>
             <table id="squadraMembri"></table>
+            <label id="squadraMembriErr" class="errorText"></label>
 
             <button id="squadraSubmit" class="submit">Invia</button>
             <label id="squadraSent"></label>
@@ -67,6 +70,9 @@
             
         <div id="insertUtente" class="formDisabled">
             <h2>Inserisci nuovo utente</h2>
+            <input type="text" placeholder="Nome utente" id="utenteNome_utente">
+            <label class="errorText" id="utenteNome_utenteErr"></label>
+
             <input type="text" placeholder="Nome" id="utenteNome">
             <label class="errorText" id="utenteNomeErr"></label>
 
@@ -79,13 +85,13 @@
             <input type="text" placeholder="Luogo di nascita" id="utenteLuogo_nasc" maxlength="16">
             <label class="errorText" id="requestPhotoErr"></label>
 
-            <label>Data di nascita:</label>
+            <label class="descriptor">Data di nascita:</label>
             <input type="date" id="utenteData_nasc" max="2012-01-01" min="1920-01-01">
             <label class="errorText" id="utenteData_nascErr"></label>
 
-
+            <label class="descriptor">Seleziona patenti:</label>
             <table id="utentePatente"></table>
-
+            <label class="descriptor">Seleziona abilità:</label>
             <table id="utenteAbilita"></table>
 
             <button id="utenteSubmit" class="submit">Invia</button>
