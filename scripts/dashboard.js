@@ -83,13 +83,13 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response.ok){
             await response.text().then((text)=>{
-                requestSent.innerHTML = "Verifica la richiesta andando su questo <a href="+text+">link</a>";
+                requestSent.innerHTML = "Richiesta creata con successo, verificala andando su questo <a href="+text+">link</a>";
                 resetValues[responseBody.tableName]();
             })
         }
         else{
             await response.text().then((text)=>{
-                requestSent.innerText = text;
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
     },
@@ -108,7 +108,8 @@ const submitHandlers = {
                 required: false
             }
         };
-
+        var mezzoSent = document.getElementById('mezzoSent');
+        mezzoSent.innerText = '';
         if(!checkRequired(requestVars)) return;
 
         var responseBody = {
@@ -123,10 +124,13 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(!response.ok){
             await response.text().then((text)=>{
-                alert(errorCodes[text]);
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
-        else resetValues[responseBody.tableName]();
+        else {
+            mezzoSent.innerText = 'Mezzo aggiunto con successo';
+            resetValues[responseBody.tableName]();
+        }
     },
     Materiale: async () => {
         const requestVars = {
@@ -143,7 +147,8 @@ const submitHandlers = {
                 required: false
             }
         };
-
+        materialeSent = document.getElementById('materialeSent');
+        materialeSent.innerText = '';
         if(!checkRequired(requestVars)) return;
 
         var responseBody = {
@@ -158,10 +163,14 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(!response.ok){
             await response.text().then((text)=>{
-                alert(errorCodes[text]);
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
-        else resetValues[responseBody.tableName]();
+        else{
+            materialeSent.innerText = 'Materiale aggiunto con successo'
+            resetValues[responseBody.tableName]();
+        } 
+            
     },
     Abilita: async () => {
         const requestVars = {
@@ -183,7 +192,7 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(!response.ok){
             await response.text().then((text)=>{
-                alert(errorCodes[text]);
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
         else resetValues[responseBody.tableName]();
@@ -213,7 +222,7 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(!response.ok){
             await response.text().then((text)=>{
-                alert(errorCodes[text]);
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
         else {
@@ -222,7 +231,54 @@ const submitHandlers = {
         }
     },
     Missione: async () => {
+        var error = false;
+        if(!checkRequired({obiettivo:{
+            error: document.getElementById('missioneObiettivoErr'),
+            required: true
+        }})) error = true;
+        var richiestaErr = document.getElementById('missioneRichiestaErr');
+        richiestaErr.innerText = '';
+        if(!inputData.currentSelected.Richiesta) {
+            richiestaErr.innerText = 'Selezionare una richiesta';
+            error = true;
+        }
+        var squadraErr = document.getElementById('missioneSquadraErr');
+        squadraErr.innerText = '';
+        if(!inputData.currentSelected.Squadra){
+            squadraErr.innerText = 'Selezionare una squadra';
+            error = true;
+        }
+        var utenteErr = document.getElementById('missioneAdminErr');
+        utenteErr.innerText = '';
+        if(!inputData.currentSelected.Utente){
+            utenteErr.innerText = 'Selezionare un responsabile';
+            error = true;
+        }
+        if(error) return;
 
+        var responseBody = {
+            type: 'insertRequest',
+            tableName: visibleId.substring(6),
+            params: {
+                mezzo: inputData.currentSelected.Mezzo,
+                materiale: inputData.currentSelected.Materiale,
+                admin: inputData.currentSelected.Utente,
+                squadra:inputData.currentSelected.Squadra,
+                richiesta: inputData.currentSelected.Richiesta,
+                obiettivo: inputData.obiettivo
+            }
+        }
+        console.log(responseBody);
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(response.ok){
+            squadraSent.innerHTML = 'Missione creata con successo'
+            resetValues[responseBody.tableName]();
+        }
+        else{
+            await response.text().then((text)=>{
+                alert(errorCodes[text] ? errorCodes[text] : text);
+            })
+        }
     },
     Squadra: async () => {
         var caposquadraErr = document.getElementById('squadraCaposquadraErr');
@@ -249,7 +305,7 @@ const submitHandlers = {
                 membri: inputData.currentSelected.Utenti
             }
         }
-
+        console.log(responseBody);
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response.ok){
             squadraSent.innerHTML = 'Squadra creata con successo'
@@ -257,7 +313,7 @@ const submitHandlers = {
         }
         else{
             await response.text().then((text)=>{
-                squadraSent.innerText = text;
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
     },
@@ -288,7 +344,8 @@ const submitHandlers = {
                 required: true
             }
         };
-
+        var utenteSent = document.getElementById('utenteSent');
+        utenteSent.innerText = '';
         if(!checkRequired(requestVars)) return;
 
         var responseBody = {
@@ -308,12 +365,12 @@ const submitHandlers = {
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(!response.ok){
             await response.text().then((text)=>{
-                alert(errorCodes[text]);
+                alert(errorCodes[text] ? errorCodes[text] : text);
             })
         }
         else {
             resetValues[responseBody.tableName]();
-            document.getElementById('patenteSent').innerText = 'Utente creato con successo'
+            utenteSent.innerText = 'Utente aggiunto con successo';
         }
     }
 }
@@ -321,10 +378,7 @@ const submitHandlers = {
 function clearInputs(tableName){
     inputData = {};
     for(var child of document.getElementById("insert"+tableName).children){
-            if(child.tagName.toLowerCase() == 'label' || child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){
-                if(child.id == tableName.toLowerCase() + 'Sent') continue;
-                child.value = '';
-            }
+            if(child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea') child.value = '';
         }
 }
 
@@ -356,6 +410,7 @@ const resetValues = {
         
     },
     Missione: async () => {
+        clearInputs('Missione');
         var res = await sendPOST({
             type: 'queryRequest',
             tableName: 'insMissione',
@@ -374,8 +429,21 @@ const resetValues = {
             fieldName: 'Squadre'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('missioneSquadra'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insMissione',
+            fieldName: 'Mezzi'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('missioneMezzo'));
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insMissione',
+            fieldName: 'Materiali'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('missioneMateriale'));
     },
     Squadra: async () => {
+        inputData = {};
         var res = await sendPOST({
             type: 'queryRequest',
             tableName: 'insSquadra',
@@ -506,6 +574,7 @@ async function extraButton(event){
 }
 
 function addEntry(event){
+    //TODO: Implement
     console.log(event.currentTarget.parentElement.id);
 }
 
@@ -608,6 +677,8 @@ function updateTable(res, table){
         var outputBody = document.createElement('tbody');
         table.appendChild(outputHead);
         table.appendChild(outputBody);
+
+        if(dataTable.length < 1) return;
 
         for(var i = 0; i < dataTable.length; i++){
             var th = document.createElement("th");

@@ -46,10 +46,24 @@
             <h2>Crea nuova missione</h2>
             <label class="descriptor">Seleziona la richiesta:</label>
             <table id="missioneRichiesta" name="Richiesta"></table>
+            <label class="errorText" id="missioneRichiestaErr"></label>
+
             <label class="descriptor">Seleziona la squadra:</label>
             <table id="missioneSquadra" name="Squadra"></table>
+            <label class="errorText" id="missioneSquadraErr"></label>
+
             <label class="descriptor">Seleziona il responsabile:</label>
             <table id="missioneAdmin"></table>
+            <label class="errorText" id="missioneAdminErr"></label>
+
+            <label class="descriptor">Seleziona i mezzi:</label>
+            <table id="missioneMezzo" name="Mezzo"></table>
+
+            <label class="descriptor">Seleziona i materiali:</label>
+            <table id="missioneMateriale" name="Materiale"></table>
+
+            <input type="text" placeholder="Obiettivo" id="missioneObiettivo">
+            <label class="errorText" id="missioneObiettivoErr"></label>
 
             <button class="submit">Inserisci</button>
             <label id="missioneSent"></label>
@@ -83,7 +97,7 @@
             <label class="errorText" id="utenteCFErr"></label>
 
             <input type="text" placeholder="Luogo di nascita" id="utenteLuogo_nasc" maxlength="16">
-            <label class="errorText" id="requestPhotoErr"></label>
+            <label class="errorText" id="utenteLuogo_nascErr"></label>
 
             <label class="descriptor">Data di nascita:</label>
             <input type="date" id="utenteData_nasc" max="2012-01-01" min="1920-01-01">
