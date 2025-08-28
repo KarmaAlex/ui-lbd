@@ -1,9 +1,0 @@
-{
-    "stuff": "things",
-    "more stuff": [
-        1,2,3,4
-    ],
-    "even more stuff": {
-        "things": "a"
-    }
-}
