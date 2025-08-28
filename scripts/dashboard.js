@@ -13,17 +13,13 @@ var errorCodes = {
     ER_TABLEACCESS_DENIED_ERROR: 'Permessi insufficienti per vedere o modificare la tabella'
 }
 
-var outputTable = document.getElementById("outputTable");
+const inputModal = document.getElementById('inputModal');
+const extraModal = document.getElementById("extraModal");
 
-var extraModal = document.getElementById("extraModal");
-var extraClose = document.getElementById("extraClose");
-extraClose.onclick = (ev) => { extraModal.style.display = "none"; }
-window.onclick = (ev) => { if(ev.target == extraModal) extraModal.style.display = "none"; }
-var extraLabel = document.getElementById("extraLabel");
-
-const switchBtns = document.getElementsByClassName("switch");
-const loadBtns = document.getElementsByClassName("load");
-const submitBtns = document.getElementsByClassName("submit");
+var visibleId = '';
+var inputTableName = '';
+var activeTable = '';
+var visibleInsert = '';
 
 function checkRequired(requestVars){
     var err = false;
@@ -39,7 +35,7 @@ function checkRequired(requestVars){
 
 const submitHandlers = {
     Richiesta : async () => {
-        const requestVars = {
+        var requestVars = {
             name: {
                 error: document.getElementById("requestNameErr"),
                 required: true
@@ -61,7 +57,7 @@ const submitHandlers = {
                 required: true
             }
         }
-        var requestSent = document.getElementById("richiestaSent");
+        const requestSent = document.getElementById("richiestaSent");
 
         if(!checkRequired(requestVars)) return;
 
@@ -236,13 +232,13 @@ const submitHandlers = {
             error: document.getElementById('missioneObiettivoErr'),
             required: true
         }})) error = true;
-        var richiestaErr = document.getElementById('missioneRichiestaErr');
+        const richiestaErr = document.getElementById('missioneRichiestaErr');
         richiestaErr.innerText = '';
         if(!inputData.currentSelected.Richiesta) {
             richiestaErr.innerText = 'Selezionare una richiesta';
             error = true;
         }
-        var squadraErr = document.getElementById('missioneSquadraErr');
+        const squadraErr = document.getElementById('missioneSquadraErr');
         squadraErr.innerText = '';
         if(!inputData.currentSelected.Squadra){
             squadraErr.innerText = 'Selezionare una squadra';
@@ -268,7 +264,6 @@ const submitHandlers = {
                 obiettivo: inputData.obiettivo
             }
         }
-        console.log(responseBody);
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response.ok){
             squadraSent.innerHTML = 'Missione creata con successo'
@@ -281,9 +276,9 @@ const submitHandlers = {
         }
     },
     Squadra: async () => {
-        var caposquadraErr = document.getElementById('squadraCaposquadraErr');
-        var membriErr = document.getElementById('squadraMembriErr');
-        var squadraSent = document.getElementById('squadraSent');
+        const caposquadraErr = document.getElementById('squadraCaposquadraErr');
+        const membriErr = document.getElementById('squadraMembriErr');
+        const squadraSent = document.getElementById('squadraSent');
         caposquadraErr.innerText = '';
         membriErr.innerText = '';
         var error = false;
@@ -305,7 +300,6 @@ const submitHandlers = {
                 membri: inputData.currentSelected.Utenti
             }
         }
-        console.log(responseBody);
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response.ok){
             squadraSent.innerHTML = 'Squadra creata con successo'
@@ -344,7 +338,7 @@ const submitHandlers = {
                 required: true
             }
         };
-        var utenteSent = document.getElementById('utenteSent');
+        const utenteSent = document.getElementById('utenteSent');
         utenteSent.innerText = '';
         if(!checkRequired(requestVars)) return;
 
@@ -371,6 +365,78 @@ const submitHandlers = {
         else {
             resetValues[responseBody.tableName]();
             utenteSent.innerText = 'Utente aggiunto con successo';
+        }
+    },
+    Aggiornamento: async () => {
+        var error = false;
+        if(!checkRequired({
+            testo: {
+                error: document.getElementById('aggiornamentoTestoErr'),
+                required: true
+            }
+        })) error = true;
+        var adminErr = document.getElementById('aggiornamentoAdminErr');
+        adminErr.innerText = '';
+        if(!inputData.currentSelected.Utente){
+            adminErr.innerText = "Selezionare l'utente che sta inserendo l'aggiornamento";
+            error = true;
+        }
+        if(error) return;
+        const aggiornamentoSent = document.getElementById('aggiornamentoSent')
+        var responseBody = {
+            type: 'insertRequest',
+            tableName: visibleInsert,
+            params: {
+                testo: inputData.testo,
+                admin: inputData.currentSelected.Utente,
+                id: inputModal.id
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(response.ok){
+            aggiornamentoSent.innerHTML = 'Aggiornamento inserito con successo'
+            resetValues[responseBody.tableName]();
+        }
+        else{
+            await response.text().then((text)=>{
+                alert(errorCodes[text] ? errorCodes[text] : text);
+            })
+        }
+    },
+    Commento: async () => {
+        var error = false;
+        if(!checkRequired({
+            testo: {
+                error: document.getElementById('commentoTestoErr'),
+                required: true
+            }
+        })) error = true;
+        var adminErr = document.getElementById('commentoAdminErr');
+        adminErr.innerText = '';
+        if(!inputData.currentSelected.Utente){
+            adminErr.innerText = "Selezionare l'utente che sta inserendo il commento";
+            error = true;
+        }
+        if(error) return;
+        const commentoSent = document.getElementById('commentoSent');
+        var responseBody = {
+            type: 'insertRequest',
+            tableName: visibleInsert,
+            params: {
+                testo: inputData.testo,
+                admin: inputData.currentSelected.Utente,
+                id: inputModal.id
+            }
+        }
+        var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(response.ok){
+            commentoSent.innerHTML = 'Commento aggiunto con successo';
+            resetValues[responseBody.tableName]();
+        }
+        else{
+            await response.text().then((text)=>{
+                alert(errorCodes[text] ? errorCodes[text] : text);
+            })
         }
     }
 }
@@ -468,24 +534,49 @@ const resetValues = {
     },
     Abilita: () => {
         clearInputs('Abilita');
+    },
+    Aggiornamento: async () => {
+        clearInputs('Aggiornamento');
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insAggiornamento',
+            fieldName: 'Admin'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('aggiornamentoAdmin'));
+    },
+    Commento: async () => {
+        clearInputs('Commento');
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'insCommento',
+            fieldName: 'Admin'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('commentoAdmin'));
     }
 }
 
-var visibleId = '';
-var inputTableName = '';
-var activeTable = '';
-
 function init(){
-    for(const element of switchBtns){
-        element.onclick = switchTab
+    const switchBtns = document.getElementsByClassName("switch");
+    const loadBtns = document.getElementsByClassName("load");
+    const submitBtns = document.getElementsByClassName("submit");
+    const submitExtraBtns = document.getElementsByClassName('submitExtra');
+
+    for(var element of switchBtns) element.onclick = switchTab;
+    for (var element of loadBtns) element.onclick = loadTable;
+    for (var element of submitBtns) element.onclick = submit;
+    for(var element of submitExtraBtns) element.onclick = submitExtra;
+
+    document.getElementById("extraClose").onclick = (ev) => { extraModal.style.display = "none"; }
+    window.onclick = (ev) => {
+        if(ev.target == extraModal) extraModal.style.display = "none";
+        if(ev.target == inputModal) inputModal.style.display = "none";
     }
 
-    for (const element of loadBtns){
-        element.onclick = loadTable
-    }
-
-    for (const element of submitBtns){
-        element.onclick = submit
+    document.getElementById('inputClose').onclick = (ev) => {
+        inputModal.style.display = 'none';
+        inputModal.id = '';
+        document.getElementById('insert'+visibleInsert).className = 'formDisabled';
+        visibleInsert = '';
     }
 
     document.getElementById('switchRichiesta').click();
@@ -511,7 +602,7 @@ async function readFileAsync(file){
 async function loadInputVars(){
     for(var child of document.getElementById(visibleId).children){
         if(child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){ //TODO find better solution
-            if(child.type && child.type == 'file'){ //This means only one file per submission
+            if(child.type && child.type == 'file'){ //This means only one file will be considered per submission
                 inputData.file = null;
                 if(child.files && child.files[0]){
                     inputData.file = {};
@@ -531,6 +622,15 @@ async function loadInputVars(){
 async function submit(){
     await loadInputVars();
     submitHandlers[inputTableName]();
+}
+
+function submitExtra(){
+    for(var child of document.getElementById('insert'+visibleInsert).children){
+        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA'){
+            inputData[child.id.substring(visibleInsert.length).toLowerCase()] = child.value;
+        }
+    }
+    submitHandlers[visibleInsert]();
 }
 
 function switchTab(event){
@@ -574,8 +674,15 @@ async function extraButton(event){
 }
 
 function addEntry(event){
-    //TODO: Implement
-    console.log(event.currentTarget.parentElement.id);
+    const regexp = /out(?<name>\D+)(?<id>\d+)/;
+    const regex = regexp.exec(event.currentTarget.parentElement.id);
+    var tableName = regex.groups.name;
+    var id = regex.groups.id;
+    visibleInsert = tableName;
+    document.getElementById('insert'+tableName).className = 'formEnabled';
+    resetValues[tableName]();
+    inputModal.style.display = 'block';
+    inputModal.id = id;
 }
 
 function selectSingle(event){

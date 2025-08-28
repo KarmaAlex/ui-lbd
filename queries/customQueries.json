@@ -1,0 +1,49 @@
+{
+    "Richiesta":{
+        "Descrizione": "SELECT d.posizione as Posizione, d.foto as Foto, d.descrizione as Descrizione FROM Desc_richiesta d WHERE d.ID = ?"
+    },
+    "insMissione": {
+        "Richieste": "SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as EXT_Descrizione, r.ID as SEL_Richiesta FROM (Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA) WHERE r.verificato = 1 AND r.ID not in (SELECT r1.ID FROM Richiesta r1 JOIN Missione m WHERE r1.ID = m.ID_RICHIESTA ) AND r.stato = 'in attesa';",
+        "Admin": "SELECT u.nome_utente as 'Nome utente', u.ID as SEL_Utente FROM Utente u WHERE u.admin = true;",
+        "Squadre": "SELECT s.ID as 'Numero squadra', u.nome_utente AS Caposquadra, s.ID as EXT_Membri, s.ID as SEL_Squadra FROM Squadra s JOIN Utente u ON s.ID_CAPO = u.ID WHERE s.ID not in (SELECT s1.ID FROM Squadra s1 JOIN Missione m ON s1.ID = m.ID_SQUADRA WHERE not m.completata ) ORDER BY s.ID ASC;",
+        "Mezzi":"SELECT m.nome as Nome, m.`desc` as Descrizione, m.targa as Targa, m.ID as MSEL_Mezzo from Mezzo m WHERE m.ID not in (SELECT m1.ID FROM Mezzo m1 JOIN assegna_mezzo am ON m1.ID = am.ID_MEZZO JOIN Missione m2 ON am.ID_MISSIONE = m2.ID WHERE m2.completata = false);",
+        "Materiali": "SELECT m.nome as Nome, m.`desc` as Descrizione, m.cod_mat as 'Codice materiale', m.ID as MSEL_Materiale FROM Materiale m WHERE m.ID not in (SELECT m1.ID FROM Materiale m1 JOIN assegna_materiale am ON m1.ID = am.ID_MATERIALE JOIN Missione m2 ON am.ID_MISSIONE = m2.ID WHERE m2.completata = false);"
+    },
+    "Missione": {
+        "Richiesta": "SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data` FROM Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA WHERE r.ID = ?;",
+        "Mezzo": "SELECT m.nome as Nome, m.`desc` as Descrizione, m.targa as Targa FROM Mezzo m JOIN assegna_mezzo am ON am.ID_MISSIONE = ? AND m.ID = am.ID_MEZZO;",
+        "Materiale": "SELECT m.nome as Nome, m.`desc` as Descrizione, m.cod_mat as 'Codice Materiale' FROM Materiale m JOIN assegna_materiale am ON am.ID_MISSIONE = ? AND m.ID = am.ID_MATERIALE;",
+        "Commento": "SELECT c.testo as Testo, u.nome_utente as 'Inserito da' FROM Commento c JOIN Utente u ON c.ID_ADMIN = u.ID WHERE c.ID_MISSIONE = ?;",
+        "Aggiornamento": "SELECT a.testo as Testo, a.`timestamp` as 'Creato', u.nome_utente as 'Inserito da' FROM Aggiornamento a JOIN Utente u on a.ID_ADMIN = u.ID WHERE a.ID_MISSIONE = ?;"
+    },
+    "insUtente": {
+        "Abilita": "SELECT a.desc as Descrizione, a.ID as MSEL_Abilita FROM Abilita a;",
+        "Patente": "SELECT p.tipo as TIPO, p.numero as Numero, p.ID as MSEL_Patente from Patente p;"
+    },
+    "Utente": {
+        "Anagrafica": "SELECT a.nome as Nome, a.cognome as Cognome, a.cf as 'Codice fiscale', a.luogo_nasc as 'Luogo di nascita', a.data_nasc as 'Data di nascita' From Anagrafica a WHERE a.ID_UTENTE = ?;",
+        "Abilita": "SELECT a.`desc` as Descrizione FROM Abilita a JOIN assegna_abilita aa ON a.ID = aa.ID_ABILITA WHERE aa.ID_UTENTE = ?;",
+        "Patente": "SELECT p.numero as Numero, p.tipo as Tipo FROM Patente p JOIN assegna_patente ap ON p.ID = ap.ID_PATENTE WHERE ap.ID_UTENTE = ?",
+        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO JOIN assegna_squadra asq ON m.ID_SQUADRA = asq.ID_SQUADRA AND asq.ID_UTENTE = ?;"
+    },
+    "insSquadra": {
+        "Caposquadra": "SELECT u.nome_utente as 'Nome utente', u.ID as SEL_Caposquadra FROM Utente u;",
+        "Membri": "SELECT u.nome_utente as 'Nome utente', u.ID as MSEL_Utenti FROM Utente u;"
+    },
+    "Squadra": {
+        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata, m.successo as Successo FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID WHERE m.ID_SQUADRA = ?;",
+        "Membri": "SELECT u.nome_utente as 'Nome utente' FROM Utente u JOIN (SELECT ass.ID_UTENTE, ass.ID_SQUADRA FROM Squadra s JOIN assegna_squadra ass ON s.ID = ass.ID_SQUADRA AND s.ID = ? ) s ON u.ID = s.ID_UTENTE"
+    },
+    "insCommento": {
+        "Admin": "SELECT u.nome_utente as 'Nome utente', u.ID as SEL_Utente FROM Utente u WHERE u.admin = true;"
+    },
+    "insAggiornamento": {
+        "Admin": "SELECT u.nome_utente as 'Nome utente', u.ID as SEL_Utente FROM Utente u WHERE u.admin = true;"
+    },
+    "Mezzo": {
+        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN assegna_mezzo am ON m.ID = am.ID_MISSIONE JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO WHERE am.ID_MEZZO = ?;"
+    },
+    "Materiale": {
+        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN assegna_materiale am ON m.ID = am.ID_MISSIONE JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO WHERE am.ID_MATERIALE = ?;"
+    }
+}

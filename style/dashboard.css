@@ -67,7 +67,7 @@ button.load {
 .errorText {
     color: red;
 }
-.submit {
+.submit .submitExtra {
     margin-top: 8px;
     font-size: medium;
 }

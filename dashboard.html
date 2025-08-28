@@ -9,6 +9,7 @@
 <body>
     <h1>Dashboard Soccorso</h1>
     <div>
+        <h2>Inserisci dati</h2>
         <div>
             <button id="switchRichiesta" class="switch">Richiesta</button>
             <button id="switchMissione" class="switch">Missione</button>
@@ -165,7 +166,7 @@
     </div>
 
     <div>
-        <h2>Ricerca</h2>
+        <h2>Visualizza dati</h2>
         <div>
             <button id="loadRichiesta" class="load">Richieste</button>
             <button id="loadMissione" class="load">Missioni</button>
@@ -177,13 +178,6 @@
             <button id="loadMateriale" class="load">Materiali</button>
         </div>
 
-        <form id="queryRichieste">
-            <label for="search">Ricerca per nome:</label>
-            <input type="text" id="search" name="search">
-
-            <button type="submitRichieste">Cerca</button>
-        </form>
-
         <h2>Record</h2>
         <table id="outputTable"></table>
     </div>
@@ -191,8 +185,37 @@
     <div class="modal" id="extraModal">
         <div class="modalContent">
             <span class="closeModal" id="extraClose">&times;</span>
-            <label id="extraLabel" for="extraTable"></label>
             <table id="extraTable"></table>
+        </div>
+    </div>
+
+    <div class="modal" id="inputModal">
+        <div class="modalContent">
+            <span class="closeModal" id="inputClose">&times;</span>
+
+            <div id="insertCommento" class="formDisabled">
+                <h2>Inserisci il commento:</h2>
+                <textarea id="commentoTesto"></textarea>
+                <label id="commentoTestoErr" class="errorText"></label>
+
+                <table id="commentoAdmin" name="Utente"></table>
+                <label id="commentoAdminErr" class="errorText"></label>
+
+                <button class="submitExtra">Inserisci</button>
+                <label id="commentoSent"></label>
+            </div>
+
+            <div id="insertAggiornamento" class="formDisabled">
+                <h2>Inserisci l'aggiornamento:</h2>
+                <textarea id="aggiornamentoTesto"></textarea>
+                <label id="aggiornamentoTestoErr" class="errorText"></label>
+
+                <table id="aggiornamentoAdmin" name="Utente"></table>
+                <label id="aggiornamentoAdminErr" class="errorText"></label>
+
+                <button class="submitExtra">Inserisci</button>
+                <label id="aggiornamentoSent"></label>
+            </div>
         </div>
     </div>
 

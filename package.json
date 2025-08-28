@@ -4,10 +4,10 @@
   "description": "Interfaccia per interagire con il database soccorso",
   "license": "ISC",
   "author": "Alessandro Di Martino",
-  "type": "commonjs",
+  "type": "module",
   "main": "server.js",
   "scripts": {
-    "exec" : "node ./scripts/server.js"
+    "exec" : "node ./server.js"
   },
   "dependencies": {
     "mysql": "^2.18.1"

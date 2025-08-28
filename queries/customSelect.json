@@ -1,0 +1,10 @@
+{
+    "Richiesta": "SELECT r.nome as Nome, r.email as Email, r.IP, r.stato as Stato, r.verificato as Verificato, r.`data` as `Data`, d.ID as EXT_Descrizione FROM Richiesta r JOIN Desc_richiesta d ON r.ID = d.ID_RICHIESTA;",
+    "Missione": "SELECT m.ID_RICHIESTA as EXT_Richiesta, u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra, m.ID as EXT_Materiale, m.ID as EXT_Mezzo, m.ID as ADD_Commento, m.ID as ADD_Aggiornamento FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO;",
+    "Squadra": "SELECT s.ID as 'Numero squadra', u.nome_utente as 'Nome utente', s.ID as EXT_Membri, s.ID as EXT_Storico FROM Utente u JOIN Squadra s ON s.ID_CAPO = u.ID ORDER BY s.ID ASC;",
+    "Utente": "SELECT u.nome_utente AS 'Nome utente', u.admin AS Admin, u.monte_ore as 'Monte ore', u.ID as EXT_Anagrafica, u.ID as EXT_Abilita, u.ID as EXT_Patente, u.ID as EXT_Storico, (SELECT COUNT(m.ID) FROM Missione m JOIN Utente u2 ON m.ID_ADMIN = u2.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u3 ON u3.ID = s.ID_CAPO JOIN assegna_squadra asq ON m.ID_SQUADRA = asq.ID_SQUADRA AND asq.ID_UTENTE = u.ID) as 'Numero di missioni' FROM Utente u;",
+    "Abilita": "SELECT a.`desc` as Descrizione FROM Abilita a;",
+    "Patente": "SELECT p.numero as Numero, p.tipo as Tipo FROM Patente p;",
+    "Mezzo": "CALL getMezzi();",
+    "Materiale": "CALL getMateriali();"
+}
