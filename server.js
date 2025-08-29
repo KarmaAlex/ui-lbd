@@ -3,7 +3,7 @@ const port = 8888;
 import {createServer} from 'https';
 import {extname, join} from 'path';
 import {readFileSync, readFile} from 'fs';
-import {createConnection} from 'mysql';
+import mysql from 'mysql';
 
 import customSelect from './queries/customSelect.json' with {type: 'json'};
 import customQueries from './queries/customQueries.json' with {type: 'json'};
@@ -34,7 +34,7 @@ const customInsert = {
             ip = ip[ip.length - 1];
             paramQuery('SELECT InserisciRichiesta(?, ?, ?, ?, ?, ?) as link;',
                 [data.params.name, data.params.email, ip, data.params.pos, fileLink, data.params.desc])
-            .then(()=>{respond(response, 200, result[0].link)})
+            .then(([result, fields])=>{respond(response, 200, result[0].link)})
             .catch((err)=>{respond(response, 500, err)})
         }
     },
@@ -90,7 +90,7 @@ const customInsert = {
                 } 
                 paramQuery('SELECT creaUtente(?, ?, ?, ?, ?, ?) AS id_utente', 
                     [data.params.nome_utente, data.params.nome, data.params.cognome, data.params.cf, data.params.data_nasc, data.params.luogo_nasc])
-                .then((res)=>{
+                .then(([res, fields])=>{
                     id_utente = res[0].id_utente;
                     recursiveQuery('INSERT INTO assegna_patente(ID_PATENTE, ID_UTENTE) VALUES (?, ?);', data.params.patente, id_utente)
                     .then(()=>{
@@ -150,7 +150,7 @@ const customInsert = {
     }
 }
 
-var connection = createConnection({ //TODO: Remove
+var connection = mysql.createConnection({ //TODO: Remove
     host     : 'localhost',
     user     : 'admin',
     password : '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
@@ -192,7 +192,8 @@ function respond(response, statusCode, body, customHeaders){
         }
     }
     response.writeHead(statusCode, resHeaders);
-    if(body) response.write(body);
+    if(body instanceof Error) console.error(body);
+    else if(body) response.write(body);
     response.end();
 }
 
@@ -217,12 +218,12 @@ function serveFile(filename, response){
 
 function paramQuery(sql, params){
     return new Promise((resolve, reject) => {
-        connection.query(sql, params, (err,res)=>{
+        connection.query(sql, params, (err, res, fields)=>{
             if(err) {
                 reject(err.code);
                 return;
             }
-            resolve(res);
+            resolve([res, fields]);
         })
     })
 }
@@ -286,6 +287,17 @@ function getTableHeader(field){
     };
 }
 
+function convertType(value, type){
+    switch(type){
+        case 'DATETIME':
+            if(!value) return null;
+            var date = new Date(value);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+        default:
+            return value;
+    }
+}
+
 function parseQuery(request, response){
     var postValue = '';
     request.on("data", (chunk) => {
@@ -305,18 +317,19 @@ function parseQuery(request, response){
                     break;
                 }
                 paramQuery(sql)
-                .then((result)=>{
-                    if(result[1].constructor.name == 'OkPacket'){
-                        var result = result[0];
-                    }
+                .then(([result, fields])=>{
+                    // Fixes for when the query is a SP call instead of pure sql
+                    if(result[1] && result[1].constructor.name == 'OkPacket'){var result = result[0]}
+                    // For some reason fields turn into a matrix where the second array is undefined, instanceof is to prevent failing when query returns one field
+                    if(fields && !fields[1] && fields[0] instanceof Array){ var fields = fields[0]}
                     var res = {headers:[],entries:[]};
-                    for(const field in result[0]){
-                        res.headers.push(getTableHeader(field));
+                    for(var field of fields){
+                        res.headers.push(getTableHeader(field.name));
                     }
                     for(const row of result){
                         var rowFinal = [];
-                        for(const field in row){
-                            rowFinal.push(row[field]);
+                        for(var [i, [key, value]] of Object.entries(Object.entries(row))){ //TODO: fix this mess
+                            rowFinal.push(convertType(value, mysql.Types[fields[i].type]));
                         }
                         res.entries.push(rowFinal);
                     }
@@ -332,7 +345,7 @@ function parseQuery(request, response){
                     return;
                 }
                 paramQuery(sql, data.id)
-                .then((result)=>{
+                .then(([result, fields])=>{
                     var res = {headers:[],entries:[]};
                     for(const field in result[0]){
                         res.headers.push(getTableHeader(field));
@@ -364,7 +377,8 @@ function parseLogin(request, response){
     request.on('end', () => {
         value = JSON.parse(value)
         if(connection){
-            if(connection.state == "connected") connection.end();
+            console.log(connection.state);
+            if(connection.state == 'authenticated') connection.end();
         }
         connection = mysql.createConnection({
             host     : 'localhost',
@@ -376,7 +390,7 @@ function parseLogin(request, response){
             if(err){
                 respond(response, 403, err.code);
             }
-            else respond(response, 200, JSON.stringify({token: "tokenValue"}));
+            else respond(response, 200);
         });
     })
 }

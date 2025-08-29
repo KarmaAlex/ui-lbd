@@ -41,3 +41,9 @@ submitBtn.onclick = async (e)=>{
         errorLabel.innerText = "Inserire username e password";
     }
 }
+
+addEventListener('keydown', (ev)=>{
+    if(ev.key == 'Enter'){
+        submitBtn.click();
+    } 
+})
