@@ -179,6 +179,9 @@
         </div>
 
         <h2>Record</h2>
+        <div id="missioneButtons" class="formDisabled">
+            <button id="chiudiMissione">Chiudi missione</button>
+        </div>
         <table id="outputTable"></table>
     </div>
     
@@ -215,6 +218,25 @@
 
                 <button class="submitExtra">Inserisci</button>
                 <label id="aggiornamentoSent"></label>
+            </div>
+
+            <div id="insertChiudiMissione" class="formDisabled">
+                <h2>Chiudi missione:</h2>
+                <label class="descriptor">Successo:</label>
+                <select id="chiudiMissioneSuccesso">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                </select>
+                <label id="missioneSuccessoErr" class="errorText"></label>
+
+                <table id="chiudiMissioneMissioni" name="Missione"></table>
+                <label id="missioneMissioniErr" class="errorText"></label>
+                
+                <button class="submitExtra">Chiudi</button>
+                <label id="submitChiudiMissioneSent"></label>
             </div>
         </div>
     </div>

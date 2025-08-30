@@ -147,6 +147,13 @@ const customInsert = {
             .then(()=>{respond(response, 200)})
             .catch((err)=>{respond(response, 500, err)})
         }
+    },
+    ChiudiMissione: {
+        handler: (data, response) => {
+            paramQuery('CALL ChiudiMissione(?, ?)', [data.params.missione, data.params.successo])
+            .then(()=>{respond(response, 200)})
+            .catch((err)=>{respond(response, 500, err)})
+        }
     }
 }
 
@@ -161,8 +168,6 @@ connection.connect();
 
 //TODO: look into paging data (unlikely to happen)
 //TODO: bottone per tempo medio di svolgimento delle missioni per caposquadra
-//TODO: Calcolo del tempo totale di impiego in missione di ogni operatore
-//TODO: bottone per chiudere una missione
 //TODO: bottone per operatori maggiormente coinvolti nelle richieste di soccorso chiuse con risultato non totalmente positivo
 
 const headers = {
@@ -376,22 +381,16 @@ function parseLogin(request, response){
     })
     request.on('end', () => {
         value = JSON.parse(value)
-        if(connection){
-            console.log(connection.state);
-            if(connection.state == 'authenticated') connection.end();
-        }
-        connection = mysql.createConnection({
-            host     : 'localhost',
-            user     : value.username,
-            password : value.password,
-            database : 'soccorso'
-        });
-        connection.connect((err)=>{
+        connection.changeUser({
+            user: value.username,
+            password: value.password
+        },
+        (err) => {
             if(err){
                 respond(response, 403, err.code);
             }
             else respond(response, 200);
-        });
+        })
     })
 }
 

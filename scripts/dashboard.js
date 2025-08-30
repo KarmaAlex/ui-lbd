@@ -25,7 +25,7 @@ function checkRequired(requestVars){
     var err = false;
     for(item in requestVars){ requestVars[item].error.innerText=''; }
     for(item in requestVars){
-        if(requestVars[item].required && inputData[item] == ''){
+        if(!inputData[item]){
             err = true;
             requestVars[item].error.innerText = "Campo richiesto"
         }
@@ -33,34 +33,51 @@ function checkRequired(requestVars){
     return !err;
 }
 
+function checkRequiredSelected(requestVars){
+    var err = false;
+    for(item in requestVars){ requestVars[item].error.innerText=''; }
+    for(item in requestVars){
+        if(!(inputData.currentSelected && inputData.currentSelected[item])){
+            err = true;
+            requestVars[item].error.innerText = "Campo richiesto"
+        }
+    }
+    return !err;
+}
+
+async function submitFinal(responseBody, sentElement, successText){
+    sentElement.innerText = '';
+    var response = await sendPOST(responseBody, ENDPOINTS.query);
+        if(response.ok){
+            sentElement.innerHTML = successText;
+            resetValues[responseBody.tableName]();
+        }
+        else{
+            await response.text().then((text)=>{
+                alert(errorCodes[text] ? errorCodes[text] : text);
+            })
+        }
+}
+
 const submitHandlers = {
     Richiesta : async () => {
         var requestVars = {
             name: {
-                error: document.getElementById("requestNameErr"),
-                required: true
+                error: document.getElementById("requestNameErr")
             },
             email: {
-                error: document.getElementById("requestEmailErr"),
-                required: true
+                error: document.getElementById("requestEmailErr")
             },
             pos: {
-                error: document.getElementById("requestPosErr"),
-                required: true
-            },
-            photo: {
-                error: document.getElementById("requestPhotoErr"),
-                required: false
+                error: document.getElementById("requestPosErr")
             },
             desc: {
-                error: document.getElementById("requestDescErr"),
-                required: true
+                error: document.getElementById("requestDescErr")
             }
         }
         const requestSent = document.getElementById("richiestaSent");
-
+        requestSent.innerText = '';
         if(!checkRequired(requestVars)) return;
-
         var responseBody = {
             type:'insertRequest',
             tableName: visibleId.substring(6),
@@ -75,7 +92,6 @@ const submitHandlers = {
                 } : null
             }
         }
-
         var response = await sendPOST(responseBody, ENDPOINTS.query);
         if(response.ok){
             await response.text().then((text)=>{
@@ -90,25 +106,15 @@ const submitHandlers = {
         }
     },
     Mezzo: async () => {
-        const requestVars = {
+        if(!checkRequired({
             nome: {
-                error: document.getElementById("mezzoNomeErr"),
-                required: true
+                error: document.getElementById("mezzoNomeErr")
             },
             targa: {
-                error: document.getElementById("mezzoTargaErr"),
-                required: true
-            },
-            desc: {
-                error: document.getElementById("mezzoDescErr"),
-                required: false
+                error: document.getElementById("mezzoTargaErr")
             }
-        };
-        var mezzoSent = document.getElementById('mezzoSent');
-        mezzoSent.innerText = '';
-        if(!checkRequired(requestVars)) return;
-
-        var responseBody = {
+        })) return;
+        submitFinal({
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
@@ -116,38 +122,18 @@ const submitHandlers = {
                 targa: inputData.targa,
                 desc: inputData.desc
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(!response.ok){
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
-        else {
-            mezzoSent.innerText = 'Mezzo aggiunto con successo';
-            resetValues[responseBody.tableName]();
-        }
+        }, document.getElementById('mezzoSent'), 'Mezzo aggiunto con successo');
     },
     Materiale: async () => {
-        const requestVars = {
+        if(!checkRequired({
             nome: {
-                error: document.getElementById("materialeNomeErr"),
-                required: true
+                error: document.getElementById("materialeNomeErr")
             },
             cod_mat: {
-                error: document.getElementById("materialeCod_matErr"),
-                required: true
-            },
-            desc: {
-                error: document.getElementById("materialeDescErr"),
-                required: false
+                error: document.getElementById("materialeCod_matErr")
             }
-        };
-        materialeSent = document.getElementById('materialeSent');
-        materialeSent.innerText = '';
-        if(!checkRequired(requestVars)) return;
-
-        var responseBody = {
+        })) return;
+        submitFinal({
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
@@ -155,104 +141,58 @@ const submitHandlers = {
                 cod_mat: inputData.cod_mat,
                 desc: inputData.desc
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(!response.ok){
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
-        else{
-            materialeSent.innerText = 'Materiale aggiunto con successo'
-            resetValues[responseBody.tableName]();
-        } 
-            
+        }, document.getElementById('materialeSent'), 'Materiale aggiunto con successo');
     },
     Abilita: async () => {
-        const requestVars = {
+        if(!checkRequired({
             desc: {
-                error: document.getElementById("abilitaDescErr"),
-                required: true
+                error: document.getElementById("abilitaDescErr")
             }
-        };
-
-        if(!checkRequired(requestVars)) return;
-
-        var responseBody = {
+        })) return;
+        submitFinal({
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
                 desc: inputData.desc
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(!response.ok){
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
-        else resetValues[responseBody.tableName]();
+        }, document.getElementById('abilitaSent'), 'Abilità aggiunta con successo');
     },
     Patente: async () => {
-        const requestVars = {
+        if(!checkRequired({
             tipo: {
-                error: document.getElementById("patenteTipoErr"),
-                required: true
+                error: document.getElementById("patenteTipoErr")
             },
             numero: {
-                error: document.getElementById("patenteNumeroErr"),
-                required: true
+                error: document.getElementById("patenteNumeroErr")
             }
-        };
-
-        if(!checkRequired(requestVars)) return;
-
-        var responseBody = {
+        })) return;
+        submitFinal({
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
                 tipo: inputData.tipo,
                 numero: inputData.numero
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(!response.ok){
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
-        else {
-            resetValues[responseBody.tableName]();
-            document.getElementById('patenteSent').innerText = 'Patente inviata con successo'
-        }
+        }, document.getElementById('patenteSent'), 'Patente inviata con successo');
     },
     Missione: async () => {
         var error = false;
         if(!checkRequired({obiettivo:{
-            error: document.getElementById('missioneObiettivoErr'),
-            required: true
+            error: document.getElementById('missioneObiettivoErr')
         }})) error = true;
-        const richiestaErr = document.getElementById('missioneRichiestaErr');
-        richiestaErr.innerText = '';
-        if(!inputData.currentSelected.Richiesta) {
-            richiestaErr.innerText = 'Selezionare una richiesta';
-            error = true;
-        }
-        const squadraErr = document.getElementById('missioneSquadraErr');
-        squadraErr.innerText = '';
-        if(!inputData.currentSelected.Squadra){
-            squadraErr.innerText = 'Selezionare una squadra';
-            error = true;
-        }
-        var utenteErr = document.getElementById('missioneAdminErr');
-        utenteErr.innerText = '';
-        if(!inputData.currentSelected.Utente){
-            utenteErr.innerText = 'Selezionare un responsabile';
-            error = true;
-        }
+        if(!checkRequiredSelected({
+            Richiesta: {
+                error: document.getElementById('missioneRichiestaErr')
+            },
+            Squadra: {
+                error: document.getElementById('missioneSquadraErr')
+            },
+            Utente: {
+                error: document.getElementById('missioneAdminErr')
+            }
+        })) error = true;
         if(error) return;
-
-        var responseBody = {
+        submitFinal({
             type: 'insertRequest',
             tableName: visibleId.substring(6),
             params: {
@@ -263,86 +203,50 @@ const submitHandlers = {
                 richiesta: inputData.currentSelected.Richiesta,
                 obiettivo: inputData.obiettivo
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(response.ok){
-            squadraSent.innerHTML = 'Missione creata con successo'
-            resetValues[responseBody.tableName]();
-        }
-        else{
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
+        }, document.getElementById('missioneSent'), 'Missione creata con successo');
     },
     Squadra: async () => {
-        const caposquadraErr = document.getElementById('squadraCaposquadraErr');
-        const membriErr = document.getElementById('squadraMembriErr');
-        const squadraSent = document.getElementById('squadraSent');
-        caposquadraErr.innerText = '';
-        membriErr.innerText = '';
         var error = false;
-        if(!inputData.currentSelected.Caposquadra){
-            caposquadraErr.innerText = 'Selezionare un caposquadra';
-            error = true;
-        }
-        if(!inputData.currentSelected.Utenti){
-            membriErr.innerText = 'Selezionare almeno un membro';
-            error = true;
-        }
+        if(!checkRequiredSelected({
+            Caposquadra: {
+                error: document.getElementById('squadraCaposquadraErr')
+            },
+            Utenti: {
+                error: document.getElementById('squadraMembriErr')
+            }
+        })) error = true;
         if(error) return;
-
-        var responseBody = {
+        submitFinal({
             type: 'insertRequest',
             tableName: visibleId.substring(6),
             params: {
                 caposquadra: inputData.currentSelected.Caposquadra,
                 membri: inputData.currentSelected.Utenti
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(response.ok){
-            squadraSent.innerHTML = 'Squadra creata con successo'
-            resetValues[responseBody.tableName]();
-        }
-        else{
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
+        }, document.getElementById('squadraSent'), 'Squadra creata con successo');
     },
     Utente: async () => {
-        const requestVars = {
+        if(!checkRequired({
             nome_utente: {
-                error: document.getElementById("utenteNome_utenteErr"),
-                required: true
+                error: document.getElementById("utenteNome_utenteErr")
             },
             nome: {
-                error: document.getElementById("utenteNomeErr"),
-                required: true
+                error: document.getElementById("utenteNomeErr")
             },
             cognome: {
-                error: document.getElementById("utenteCognomeErr"),
-                required: true
+                error: document.getElementById("utenteCognomeErr")
             },
             cf: {
-                error: document.getElementById("utenteCFErr"),
-                required: true
+                error: document.getElementById("utenteCFErr")
             },
             luogo_nasc: {
-                error: document.getElementById("utenteLuogo_nascErr"),
-                required: true
+                error: document.getElementById("utenteLuogo_nascErr")
             },
             data_nasc: {
-                error: document.getElementById("utenteData_nascErr"),
-                required: true
+                error: document.getElementById("utenteData_nascErr")
             }
-        };
-        const utenteSent = document.getElementById('utenteSent');
-        utenteSent.innerText = '';
-        if(!checkRequired(requestVars)) return;
-
-        var responseBody = {
+        })) return;
+        submitFinal({
             type:'insertRequest',
             tableName: visibleId.substring(6),
             params:{
@@ -355,35 +259,22 @@ const submitHandlers = {
                 abilita: inputData.currentSelected.Abilita,
                 patente: inputData.currentSelected.Patente
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(!response.ok){
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
-        else {
-            resetValues[responseBody.tableName]();
-            utenteSent.innerText = 'Utente aggiunto con successo';
-        }
+        }, document.getElementById('utenteSent'), 'Utente aggiunto con successo');
     },
     Aggiornamento: async () => {
         var error = false;
         if(!checkRequired({
             testo: {
-                error: document.getElementById('aggiornamentoTestoErr'),
-                required: true
+                error: document.getElementById('aggiornamentoTestoErr')
             }
         })) error = true;
-        var adminErr = document.getElementById('aggiornamentoAdminErr');
-        adminErr.innerText = '';
-        if(!inputData.currentSelected.Utente){
-            adminErr.innerText = "Selezionare l'utente che sta inserendo l'aggiornamento";
-            error = true;
-        }
+        if(!checkRequiredSelected({
+            Utente: {
+                error: document.getElementById('aggiornamentoAdminErr')
+            }
+        })) error = true;
         if(error) return;
-        const aggiornamentoSent = document.getElementById('aggiornamentoSent')
-        var responseBody = {
+        submitFinal({
             type: 'insertRequest',
             tableName: visibleInsert,
             params: {
@@ -391,35 +282,22 @@ const submitHandlers = {
                 admin: inputData.currentSelected.Utente,
                 id: inputModal.id
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(response.ok){
-            aggiornamentoSent.innerHTML = 'Aggiornamento inserito con successo'
-            resetValues[responseBody.tableName]();
-        }
-        else{
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
+        }, document.getElementById('aggiornamentoSent'), 'Aggiornamento inserito con successo');
     },
     Commento: async () => {
         var error = false;
         if(!checkRequired({
             testo: {
-                error: document.getElementById('commentoTestoErr'),
-                required: true
+                error: document.getElementById('commentoTestoErr')
             }
         })) error = true;
-        var adminErr = document.getElementById('commentoAdminErr');
-        adminErr.innerText = '';
-        if(!inputData.currentSelected.Utente){
-            adminErr.innerText = "Selezionare l'utente che sta inserendo il commento";
-            error = true;
-        }
+        if(!checkRequiredSelected({
+            Utente: {
+                error: document.getElementById('commentoAdminErr')
+            }
+        })) error = true;
         if(error) return;
-        const commentoSent = document.getElementById('commentoSent');
-        var responseBody = {
+        submitFinal({
             type: 'insertRequest',
             tableName: visibleInsert,
             params: {
@@ -427,17 +305,30 @@ const submitHandlers = {
                 admin: inputData.currentSelected.Utente,
                 id: inputModal.id
             }
-        }
-        var response = await sendPOST(responseBody, ENDPOINTS.query);
-        if(response.ok){
-            commentoSent.innerHTML = 'Commento aggiunto con successo';
-            resetValues[responseBody.tableName]();
-        }
-        else{
-            await response.text().then((text)=>{
-                alert(errorCodes[text] ? errorCodes[text] : text);
-            })
-        }
+        }, document.getElementById('commentoSent'), 'Commento aggiunto con successo');
+    },
+    ChiudiMissione: async () => {
+        var error = false;
+        if(!checkRequired({
+            successo: {
+                error: document.getElementById('missioneSuccessoErr')
+            }
+        })) error = true;
+        if(!checkRequiredSelected({
+            Missione: {
+                error: document.getElementById('missioneMissioniErr')
+            }
+        })) error = true;
+        if(error) return;
+        submitFinal({
+            type: 'insertRequest',
+            tableName: visibleInsert,
+            params: {
+                missione: inputData.currentSelected.Missione,
+                successo: inputData.successo
+            }
+        }, document.getElementById('submitChiudiMissioneSent'), 'Missione chiusa con successo');
+
     }
 }
 
@@ -552,6 +443,15 @@ const resetValues = {
             fieldName: 'Admin'
         }, ENDPOINTS.query);
         updateTable(res, document.getElementById('commentoAdmin'));
+    },
+    ChiudiMissione: async () => {
+        document.getElementById('chiudiMissioneSuccesso').value = '';
+        var res = await sendPOST({
+            type: 'queryRequest',
+            tableName: 'chiudiMissione',
+            fieldName: 'Missioni'
+        }, ENDPOINTS.query);
+        updateTable(res, document.getElementById('chiudiMissioneMissioni'));
     }
 }
 
@@ -579,6 +479,8 @@ function init(){
         visibleInsert = '';
     }
 
+    document.getElementById('chiudiMissione').onclick = closeMissione;
+
     document.getElementById('switchRichiesta').click();
     document.getElementById('loadRichiesta').click();
 }
@@ -601,7 +503,7 @@ async function readFileAsync(file){
 
 async function loadInputVars(){
     for(var child of document.getElementById(visibleId).children){
-        if(child.tagName.toLowerCase() == 'input' || child.tagName.toLowerCase() == 'textarea'){ //TODO find better solution
+        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA'){ //TODO find better solution
             if(child.type && child.type == 'file'){ //This means only one file will be considered per submission
                 inputData.file = null;
                 if(child.files && child.files[0]){
@@ -626,7 +528,7 @@ async function submit(){
 
 function submitExtra(){
     for(var child of document.getElementById('insert'+visibleInsert).children){
-        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA'){
+        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA' || child.tagName == 'SELECT'){
             inputData[child.id.substring(visibleInsert.length).toLowerCase()] = child.value;
         }
     }
@@ -679,10 +581,17 @@ function addEntry(event){
     var tableName = regex.groups.name;
     var id = regex.groups.id;
     visibleInsert = tableName;
-    document.getElementById('insert'+tableName).className = 'formEnabled';
     resetValues[tableName]();
+    document.getElementById('insert'+tableName).className = 'formEnabled';
     inputModal.style.display = 'block';
     inputModal.id = id;
+}
+
+function closeMissione(event){
+    resetValues['ChiudiMissione']();
+    visibleInsert = 'ChiudiMissione';
+    document.getElementById('insert'+visibleInsert).className = 'formEnabled';
+    inputModal.style.display = 'block';
 }
 
 function selectSingle(event){
@@ -810,6 +719,8 @@ function updateTable(res, table){
 
 async function loadTable(event){
     const tableName = event.currentTarget.id.substring(4);
+    if(tableName == 'Missione') document.getElementById('missioneButtons').className = 'formEnabled';
+    else document.getElementById('missioneButtons').className = 'formDisabled';
     var res = await sendPOST({
         type: 'selectRequest',
         tableName: tableName

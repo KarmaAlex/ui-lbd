@@ -45,5 +45,8 @@
     },
     "Materiale": {
         "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN assegna_materiale am ON m.ID = am.ID_MISSIONE JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO WHERE am.ID_MATERIALE = ?;"
+    },
+    "chiudiMissione": {
+        "Missioni": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra, m.ID as SEL_Missione FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO WHERE !m.completata;"
     }
 }
