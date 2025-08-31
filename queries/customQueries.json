@@ -24,7 +24,7 @@
         "Anagrafica": "SELECT a.nome as Nome, a.cognome as Cognome, a.cf as 'Codice fiscale', a.luogo_nasc as 'Luogo di nascita', a.data_nasc as 'Data di nascita' From Anagrafica a WHERE a.ID_UTENTE = ?;",
         "Abilita": "SELECT a.`desc` as Descrizione FROM Abilita a JOIN assegna_abilita aa ON a.ID = aa.ID_ABILITA WHERE aa.ID_UTENTE = ?;",
         "Patente": "SELECT p.numero as Numero, p.tipo as Tipo FROM Patente p JOIN assegna_patente ap ON p.ID = ap.ID_PATENTE WHERE ap.ID_UTENTE = ?",
-        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO JOIN assegna_squadra asq ON m.ID_SQUADRA = asq.ID_SQUADRA AND asq.ID_UTENTE = ?;"
+        "Storico": "SELECT u.nome_utente as Responsabile, m.obiettivo as Obiettivo, m.inizio as Inizio, m.fine as Fine, m.durata as Durata, m.completata as Completata,m.successo as Successo, u2.nome_utente as Caposquadra FROM Missione m JOIN Utente u ON m.ID_ADMIN = u.ID JOIN Squadra s ON m.ID_SQUADRA = s.ID JOIN Utente u2 ON u2.ID = s.ID_CAPO JOIN assegna_squadra asq ON m.ID_SQUADRA = asq.ID_SQUADRA AND (asq.ID_UTENTE = ? OR s.ID_CAPO = ?) GROUP BY m.ID;"
     },
     "insSquadra": {
         "Caposquadra": "SELECT u.nome_utente as 'Nome utente', u.ID as SEL_Caposquadra FROM Utente u;",

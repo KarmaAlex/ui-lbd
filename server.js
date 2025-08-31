@@ -351,6 +351,8 @@ function parseQuery(request, response){
                     respond(response, 403);
                     break;
                 }
+                // Special case where the query requires the same ID twice
+                if(data.tableName == 'Utente' && data.fieldName == 'Storico') data.id = [data.id, data.id];
                 paramQuery(sql, data.id)
                 .then(([result, fields])=>{respond(response, 200, JSON.stringify(parseRes(result, fields)))})
                 .catch((err)=>{respond(response, 500, err)})
