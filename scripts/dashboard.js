@@ -503,7 +503,7 @@ async function readFileAsync(file){
 
 async function loadInputVars(){
     for(var child of document.getElementById(visibleId).children){
-        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA'){ //TODO find better solution
+        if(child.tagName == 'INPUT' || child.tagName == 'TEXTAREA'){
             if(child.type && child.type == 'file'){ //This means only one file will be considered per submission
                 inputData.file = null;
                 if(child.files && child.files[0]){

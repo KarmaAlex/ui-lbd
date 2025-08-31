@@ -157,7 +157,7 @@ const customInsert = {
     }
 }
 
-var connection = mysql.createConnection({ //TODO: Remove
+var connection = mysql.createConnection({ //Login di default per testare più velocemente
     host     : 'localhost',
     user     : 'admin',
     password : '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
@@ -165,10 +165,6 @@ var connection = mysql.createConnection({ //TODO: Remove
 });
 
 connection.connect();
-
-//TODO: look into paging data (unlikely to happen)
-//TODO: bottone per tempo medio di svolgimento delle missioni per caposquadra
-//TODO: bottone per operatori maggiormente coinvolti nelle richieste di soccorso chiuse con risultato non totalmente positivo
 
 const headers = {
     'Access-Control-Allow-Origin': 'https://localhost:8888',
@@ -297,10 +293,33 @@ function convertType(value, type){
         case 'DATETIME':
             if(!value) return null;
             var date = new Date(value);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        case 'DATE':
+            if(!value) return null;
+            return new Date(value).toLocaleDateString();
         default:
             return value;
     }
+}
+
+function parseRes(result, fields){
+    // Fixes for when the query is a SP call instead of pure sql
+    if(result[1] && result[1].constructor.name == 'OkPacket'){var result = result[0]}
+    // For some reason fields turn into a matrix where the second array is undefined, instanceof is to prevent failing when query returns one field
+    if(fields && !fields[1] && fields[0] instanceof Array){ var fields = fields[0]}
+    var res = {headers:[],entries:[]};
+    for(var field of fields){
+        res.headers.push(getTableHeader(field.name));
+    }
+    var fieldsArray = Array.from(fields);
+    for(const row of result){
+        var rowFinal = [];
+        for(var i = 0; i < fieldsArray.length; i++){
+            rowFinal.push(convertType(Object.entries(row)[i][1], mysql.Types[fieldsArray[i].type]));
+        }
+        res.entries.push(rowFinal);
+    }
+    return res;
 }
 
 function parseQuery(request, response){
@@ -314,57 +333,26 @@ function parseQuery(request, response){
             case 'insertRequest':
                 var reqHandler = customInsert[data.tableName].handler;
                 if(reqHandler) reqHandler(data, response, request);
+                else respond(response, 403);
                 break;
             case 'selectRequest':
                 var sql = customSelect[data.tableName];
-                if(!sql) {
+                if(!sql){
                     respond(response, 403);
                     break;
                 }
                 paramQuery(sql)
-                .then(([result, fields])=>{
-                    // Fixes for when the query is a SP call instead of pure sql
-                    if(result[1] && result[1].constructor.name == 'OkPacket'){var result = result[0]}
-                    // For some reason fields turn into a matrix where the second array is undefined, instanceof is to prevent failing when query returns one field
-                    if(fields && !fields[1] && fields[0] instanceof Array){ var fields = fields[0]}
-                    var res = {headers:[],entries:[]};
-                    for(var field of fields){
-                        res.headers.push(getTableHeader(field.name));
-                    }
-                    for(const row of result){
-                        var rowFinal = [];
-                        for(var [i, [key, value]] of Object.entries(Object.entries(row))){ //TODO: fix this mess
-                            rowFinal.push(convertType(value, mysql.Types[fields[i].type]));
-                        }
-                        res.entries.push(rowFinal);
-                    }
-                    respond(response, 200, JSON.stringify(res));
-                    
-                })
+                .then(([result, fields])=>{respond(response, 200, JSON.stringify(parseRes(result, fields)))})
                 .catch((err)=>{respond(response, 500, err)})
                 break;
             case 'queryRequest':
                 var sql = customQueries[data.tableName][data.fieldName];
                 if(!sql){
                     respond(response, 403);
-                    return;
+                    break;
                 }
                 paramQuery(sql, data.id)
-                .then(([result, fields])=>{
-                    var res = {headers:[],entries:[]};
-                    for(const field in result[0]){
-                        res.headers.push(getTableHeader(field));
-                    }
-                    for(const row of result){
-                        var rowFinal = [];
-                        for(const field in row){
-                            rowFinal.push(row[field]);
-                        }
-                        res.entries.push(rowFinal);
-                    }
-                    respond(response, 200, JSON.stringify(res));
-                    
-                })
+                .then(([result, fields])=>{respond(response, 200, JSON.stringify(parseRes(result, fields)))})
                 .catch((err)=>{respond(response, 500, err)})
                 break;
             default:
