@@ -245,6 +245,7 @@ function paramQuery(sql, params){
     return new Promise((resolve, reject) => {
         pool.query(sql, params, (err, res, fields)=>{
             if(err) {
+                console.error(err);
                 reject(err.code);
                 return;
             }
@@ -321,6 +322,9 @@ function convertType(value, type){
         case 'DATE':
             if(!value) return null;
             return new Date(value).toLocaleDateString();
+        case 'TINY':
+            if(value == 1) return 'Sì';
+            return 'No';
         default:
             return value;
     }
@@ -328,7 +332,7 @@ function convertType(value, type){
 
 function parseRes(result, fields){
     // Fixes for when the query is a SP call instead of pure sql
-    if(result[1] && result[1].constructor.name == 'OkPacket'){var result = result[0]}
+    if(result[1] && result[1].constructor.name == 'ResultSetHeader'){var result = result[0]}
     // For some reason fields turn into a matrix where the second array is undefined, instanceof is to prevent failing when query returns one field
     if(fields && !fields[1] && fields[0] instanceof Array){ var fields = fields[0]}
     var res = {headers:[],entries:[]};

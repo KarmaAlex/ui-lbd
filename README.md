@@ -34,3 +34,4 @@ Il certificato è creato e firmato da me.
 
 Browser testati:
 - Firefox 142.0: necessita il certificato
+- Edge 139.0.3405.125: non necessario
