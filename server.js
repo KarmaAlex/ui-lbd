@@ -32,6 +32,8 @@ const customInsert = {
             }
             var ip = request.socket.remoteAddress.split(":");
             ip = ip[ip.length - 1];
+            //Chromium based browsers only send the ipv6 while firefox sends both ipv6 and ipv4, if available we save ipv4
+            if(ip.length < 4) ip = request.socket.remoteAddress;
             paramQuery('SELECT inserisciRichiesta(?, ?, ?, ?, ?, ?) as link;',
                 [data.params.name, data.params.email, ip, data.params.pos, fileLink, data.params.desc])
             .then(([result, fields])=>{respond(response, 200, result[0].link)})
@@ -418,7 +420,7 @@ function validateRequest(request, response){
         paramQuery('UPDATE Richiesta r SET verificato = true WHERE r.ID = (SELECT r2.ID FROM Richiesta r2 WHERE r2.string = ?);', code)
         .then(()=>{respond(response, 200, "Richiesta verificata con successo")})
         .catch((err)=>{respond(response, 500, err.message)})
-    } 
+    }
 }
 
 function parsePOST(request, response, uri){
