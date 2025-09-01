@@ -3,7 +3,7 @@ const port = 8888;
 import {createServer} from 'https';
 import {extname, join} from 'path';
 import {readFileSync, readFile} from 'fs';
-import mysql from 'mysql';
+import mysql from 'mysql2';
 
 import customSelect from './queries/customSelect.json' with {type: 'json'};
 import customQueries from './queries/customQueries.json' with {type: 'json'};
@@ -40,70 +40,94 @@ const customInsert = {
     },
     Missione: {
         handler: (data, response) => {
-            connection.beginTransaction((err)=>{
-                if(err) {
-                    respond(response, 500, err.code);
+            pool.getConnection((err, connection)=>{
+                if(err){
+                    respond(response, 500);
+                    console.error(err);
                     return;
                 }
-                paramQuery('SELECT creaMissione(?, ?, ?, ?) as id_missione', [data.params.richiesta, data.params.admin, data.params.squadra, data.params.obiettivo])
-                .then((res)=>{
-                    var id_missione = res[0].id_missione;
-                    recursiveQuery('INSERT INTO assegna_mezzo(ID_MEZZO, ID_MISSIONE) VALUES (?, ?);', data.params.mezzo, id_missione)
-                    .then(()=>{
-                        recursiveQuery('INSERT INTO assegna_materiale(ID_MATERIALE, ID_MISSIONE) VALUES (?, ?);', data.params.materiale, id_missione)
-                        .then(()=>{connection.commit(()=>{respond(response, 200)})})
-                        .catch((err)=>{respond(response, 500, err)})
+                connection.beginTransaction((err)=>{
+                    if(err) {
+                        respond(response, 500, err.code);
+                        return;
+                    }
+                    paramQuery('SELECT creaMissione(?, ?, ?, ?) as id_missione', [data.params.richiesta, data.params.admin, data.params.squadra, data.params.obiettivo])
+                    .then(([res, fields])=>{
+                        var id_missione = res[0].id_missione;
+                        recursiveQuery('INSERT INTO assegna_mezzo(ID_MEZZO, ID_MISSIONE) VALUES (?, ?);', data.params.mezzo, id_missione)
+                        .then(()=>{
+                            recursiveQuery('INSERT INTO assegna_materiale(ID_MATERIALE, ID_MISSIONE) VALUES (?, ?);', data.params.materiale, id_missione)
+                            .then(()=>{connection.commit(()=>{respond(response, 200)})})
+                            .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
+                        })
+                        .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                     })
-                    .catch((err)=>{respond(response, 500, err)})
+                    .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                 })
-                .catch((err)=>{respond(response, 500, err)})
+                connection.release();
             })
         }
     },
     Squadra: {
         handler: (data, response) => {
             if(data.params.caposquadra && data.params.membri){
-                connection.beginTransaction((err)=>{
+                pool.getConnection((err, connection)=>{
                     if(err){
-                        respond(response, 500, err.code);
+                        console.error(err);
+                        respond(response, 500);
                         return;
-                    }
-                    paramQuery('SELECT creaSquadra(?) AS id_squadra', data.params.caposquadra)
-                    .then(()=>{
-                        var id_squadra = res[0].id_squadra;
-                        recursiveQuery('INSERT INTO assegna_squadra(ID_UTENTE, ID_SQUADRA) VALUES (?, ?);', data.params.membri, id_squadra)
-                        .then(()=>{ connection.commit(()=>{ respond(response, 200) }) })
-                        .catch((err)=>{ connection.rollback(()=>{ respond(response, 500, err) }) })
+                    } 
+                    connection.beginTransaction((err)=>{
+                        if(err){
+                            respond(response, 500, err.code);
+                            return;
+                        }
+                        paramQuery('SELECT creaSquadra(?) AS id_squadra', data.params.caposquadra)
+                        .then(([res, fields]) => {
+                            var id_squadra = res[0].id_squadra;
+                            recursiveQuery('INSERT INTO assegna_squadra(ID_UTENTE, ID_SQUADRA) VALUES (?, ?);', data.params.membri, id_squadra)
+                            .then(()=>{ connection.commit(()=>{ respond(response, 200)})})
+                            .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
+                        })
+                        .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                     })
-                    .catch((err)=>{ connection.rollback(()=>{ respond(response, 500, err) }) })
+                    connection.release();
                 })
+                
             }
         }
     },
     Utente: {
         handler: (data, response) => {
             var id_utente;
-            connection.beginTransaction((err) => {
+            pool.getConnection((err, connection)=>{
                 if(err){
-                    respond(response, 500, err.code);
+                    respond(response, 500);
+                    console.error(err);
                     return;
-                } 
-                paramQuery('SELECT creaUtente(?, ?, ?, ?, ?, ?) AS id_utente', 
-                    [data.params.nome_utente, data.params.nome, data.params.cognome, data.params.cf, data.params.data_nasc, data.params.luogo_nasc])
-                .then(([res, fields])=>{
-                    id_utente = res[0].id_utente;
-                    recursiveQuery('INSERT INTO assegna_patente(ID_PATENTE, ID_UTENTE) VALUES (?, ?);', data.params.patente, id_utente)
-                    .then(()=>{
-                        recursiveQuery('INSERT INTO assegna_abilita(ID_ABILITA, ID_UTENTE) VALUES (?, ?);', data.params.abilita, id_utente)
-                        .then(()=>{ connection.commit(()=>{ respond(response, 200); }) })
-                        .catch((err)=>{ connection.rollback(()=>{ respond(response, 500, err); })
+                }
+                connection.beginTransaction((err) => {
+                    if(err){
+                        respond(response, 500, err.code);
+                        return;
+                    } 
+                    paramQuery('SELECT creaUtente(?, ?, ?, ?, ?, ?) AS id_utente', 
+                        [data.params.nome_utente, data.params.nome, data.params.cognome, data.params.cf, data.params.data_nasc, data.params.luogo_nasc])
+                    .then(([res, fields])=>{
+                        id_utente = res[0].id_utente;
+                        recursiveQuery('INSERT INTO assegna_patente(ID_PATENTE, ID_UTENTE) VALUES (?, ?);', data.params.patente, id_utente)
+                        .then(()=>{
+                            recursiveQuery('INSERT INTO assegna_abilita(ID_ABILITA, ID_UTENTE) VALUES (?, ?);', data.params.abilita, id_utente)
+                            .then(()=>{ connection.commit(()=>{ respond(response, 200)})})
+                            .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                         })
+                        .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                     })
-                    .catch((err)=>{ connection.rollback(()=>{ respond(response, 500, err); }) })
+                    .catch((err)=>{connection.rollback((r_err)=>respond(response, 500, err.code))})
                 })
-                .catch((err)=>{ connection.rollback(()=>{ respond(response, 500, err.code); })
-                })
+                connection.release();
             })
+            
         }
     },
     Abilita: {
@@ -157,14 +181,16 @@ const customInsert = {
     }
 }
 
-var connection = mysql.createConnection({ //Login di default per testare più velocemente
+var pool = mysql.createPool({ //Login di default per testare più velocemente
     host     : 'localhost',
     user     : 'admin',
     password : '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
     database : 'soccorso'
 });
 
-connection.connect();
+pool.on('error',(err) => {
+    console.error(err);
+})
 
 const headers = {
     'Access-Control-Allow-Origin': 'https://localhost:8888',
@@ -185,7 +211,6 @@ var contentTypes = { // Works without it but this gets rid of a warning about mi
 };
 
 function respond(response, statusCode, body, customHeaders){
-    //console.log(`running with context ${statusCode}, ${body}`);
     var resHeaders = headers;
     if(customHeaders){
         for(var key in customHeaders){
@@ -205,8 +230,7 @@ function serveFile(filename, response){
             return;
         }
         else if(err) {
-            console.log(err);
-            respond(response, 500, err);
+            respond(response, 500, err.code);
             return;
         }
 
@@ -219,7 +243,7 @@ function serveFile(filename, response){
 
 function paramQuery(sql, params){
     return new Promise((resolve, reject) => {
-        connection.query(sql, params, (err, res, fields)=>{
+        pool.query(sql, params, (err, res, fields)=>{
             if(err) {
                 reject(err.code);
                 return;
@@ -236,7 +260,7 @@ async function recursiveQuery(sql, array, param){
             resolve();
             return;
         }
-        connection.query(sql, [array.pop(), param], async (err) => {
+        pool.query(sql, [array.pop(), param], async (err) => {
             if(err) {
                 reject(err.message);
                 return;
@@ -371,15 +395,15 @@ function parseLogin(request, response){
     })
     request.on('end', () => {
         value = JSON.parse(value)
-        connection.changeUser({
-            user: value.username,
-            password: value.password
-        },
-        (err) => {
+        pool.config.user = value.username;
+        pool.config.password = value.password;
+        pool.getConnection((err, connection) => {
             if(err){
-                respond(response, 403, err.code);
+                respond(response, 403);
+                return;
             }
-            else respond(response, 200);
+            respond(response, 200);
+            connection.release();
         })
     })
 }
@@ -396,10 +420,7 @@ function validateRequest(request, response){
 function parsePOST(request, response, uri){
     switch(uri){
         case "/query":
-            if(connection && connection.state == 'authenticated'){
-                    parseQuery(request,response);
-                }
-            else respond(response, 500, 'Database connection failed')
+            parseQuery(request,response);
             break;
         case "/login":
             parseLogin(request, response);
