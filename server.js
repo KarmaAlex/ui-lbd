@@ -32,7 +32,7 @@ const customInsert = {
             }
             var ip = request.socket.remoteAddress.split(":");
             ip = ip[ip.length - 1];
-            paramQuery('SELECT InserisciRichiesta(?, ?, ?, ?, ?, ?) as link;',
+            paramQuery('SELECT inserisciRichiesta(?, ?, ?, ?, ?, ?) as link;',
                 [data.params.name, data.params.email, ip, data.params.pos, fileLink, data.params.desc])
             .then(([result, fields])=>{respond(response, 200, result[0].link)})
             .catch((err)=>{respond(response, 500, err)})
