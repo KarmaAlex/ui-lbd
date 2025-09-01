@@ -401,8 +401,8 @@ function parseLogin(request, response){
     })
     request.on('end', () => {
         value = JSON.parse(value)
-        pool.config.user = value.username;
-        pool.config.password = value.password;
+        pool.config.connectionConfig.user = value.username;
+        pool.config.connectionConfig.password = value.password;
         pool.getConnection((err, connection) => {
             if(err){
                 respond(response, 403);
