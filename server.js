@@ -1,8 +1,8 @@
 const port = 8888;
 
 import {createServer} from 'https';
-import {extname, join} from 'path';
-import {readFileSync, readFile} from 'fs';
+import {extname, join, basename, resolve} from 'path';
+import {readFileSync, readFile, existsSync, writeFileSync, mkdirSync} from 'fs';
 import mysql from 'mysql2';
 
 import customSelect from './queries/customSelect.json' with {type: 'json'};
@@ -16,19 +16,19 @@ const customInsert = {
                 var ext = null
                 const buffer = Buffer.from(data.params.file.data.split(",")[1], "base64");
                 var i = 1;
-                var filename = path.basename(data.params.file.filename).split(".");
+                var filename = basename(data.params.file.filename).split(".");
                 filename.pop();
                 filename = filename.join(".");
-                ext = path.extname(data.params.file.filename);
+                ext = extname(data.params.file.filename);
                 fileLink = filename
-                if(!fs.existsSync('./res')) fs.mkdirSync('./res');
-                while(fs.existsSync("./res/" + fileLink + ext)){
+                if(!existsSync('./res')) mkdirSync('./res');
+                while(existsSync("./res/" + fileLink + ext)){
                     fileLink = filename + "(" + i + ")";
                     i++;
                 }
-                fs.writeFileSync("./res/" + fileLink + ext, buffer, {flag:"w+"});
+                writeFileSync("./res/" + fileLink + ext, buffer, {flag:"w+"});
                 //override file to set up data properly for use in query
-                fileLink = path.resolve("./res/" + fileLink + ext);
+                fileLink = resolve("./res/" + fileLink + ext);
             }
             var ip = request.socket.remoteAddress.split(":");
             ip = ip[ip.length - 1];
@@ -417,7 +417,7 @@ function parseLogin(request, response){
 function validateRequest(request, response){
     const code = new URL(`https://localhost:${port}${request.url}`).searchParams.get("code");
     if(code){
-        paramQuery('UPDATE Richiesta r SET verificato = true WHERE r.ID = (SELECT r2.ID FROM Richiesta r2 WHERE r2.string = ?);', code)
+        paramQuery('UPDATE Richiesta r SET verificato = true, stato="attiva" WHERE r.ID = (SELECT r2.ID FROM Richiesta r2 WHERE r2.string = ?);', code)
         .then(()=>{respond(response, 200, "Richiesta verificata con successo")})
         .catch((err)=>{respond(response, 500, err.message)})
     }
